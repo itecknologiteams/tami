@@ -16,8 +16,9 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 
 ### Monorepo
 
-- Package manager: pnpm workspaces.
+- Package manager: pnpm workspaces, pinned in `package.json` as `pnpm@10.32.0`.
 - Language: TypeScript across backend, web, and React Native apps.
+- TypeScript: `5.9.3`.
 - Repository layout:
   - `apps/api` for the backend API.
   - `apps/admin` for the admin command center.
@@ -29,7 +30,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 ### Backend
 
 - Runtime: Node.js LTS.
-- Framework: NestJS modular monolith.
+- Framework: NestJS modular monolith, currently pinned to NestJS `11.1.6`.
 - Database: PostgreSQL with PostGIS.
 - ORM: Prisma.
 - Cache and queues: Redis.
@@ -43,7 +44,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 
 ### Admin Command Center
 
-- Framework: Next.js with React and TypeScript.
+- Framework: Next.js `16.2.10` with React `19.2.7` and TypeScript.
 - UI styling: Tailwind CSS plus a small internal component system.
 - State/data fetching: TanStack Query.
 - Tables: TanStack Table.
@@ -52,7 +53,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 
 ### Rider App
 
-- Framework: React Native with TypeScript.
+- Framework: React Native `0.86.0` with TypeScript.
 - Navigation: React Navigation.
 - State/data fetching: TanStack Query.
 - Forms: React Hook Form with Zod validation.
@@ -60,7 +61,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 
 ### Driver App
 
-- Framework: React Native with TypeScript, Android target only.
+- Framework: React Native `0.86.0` with TypeScript, Android target only.
 - UI must be optimized for in-dash use:
   - large touch targets
   - clear ride state controls
@@ -81,6 +82,8 @@ Current implementation direction:
 
 - Mobile rider app: `@maplibre/maplibre-react-native`.
 - Android driver app: `@maplibre/maplibre-react-native`.
+- Mobile MapLibre package version: `@maplibre/maplibre-react-native@11.3.6`.
+- Requested style family: `streets-v2`.
 - Admin command center: prefer a non-GL/static or server-rendered map approach for the first admin dashboard if possible; if rich live vector maps are required later, revisit this decision explicitly before introducing `maplibre-gl-js`.
 - Map styles: use public/open map styles approved for Sindh operations.
 - Location storage: store coordinates with PostgreSQL/PostGIS.
@@ -131,4 +134,3 @@ The database remains the source of truth. Real-time events must not be the only 
 - Cash and wallet payment reconciliation.
 - Configurable contracted-driver payout model.
 - Full audit trail for sensitive operational actions.
-
