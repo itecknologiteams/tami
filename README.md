@@ -24,6 +24,7 @@ pnpm install
 pnpm test
 pnpm typecheck
 pnpm build
+pnpm lint
 ```
 
 ## Stack Guardrails
@@ -41,3 +42,28 @@ The first implementation plan is in `docs/superpowers/plans/2026-07-09-tami-foun
 ## Mobile Direction
 
 Mobile apps are planned in Flutter/Dart from one shared codebase. The Flutter migration plan is in `docs/superpowers/plans/2026-07-09-tami-mobile-flutter-migration-plan.md`.
+
+## Mobile Commands
+
+```bash
+cd apps/mobile && flutter pub get
+cd apps/mobile && flutter test
+cd apps/mobile && flutter analyze
+```
+
+From the repository root:
+
+```bash
+pnpm mobile:test
+pnpm mobile:analyze
+```
+
+Build entry points:
+
+```bash
+cd apps/mobile && flutter build apk --target lib/main_rider.dart
+cd apps/mobile && flutter build ios --target lib/main_rider.dart
+cd apps/mobile && flutter build apk --target lib/main_driver.dart
+```
+
+The rider app targets Android and iOS. The driver app targets Android infotainment devices.
