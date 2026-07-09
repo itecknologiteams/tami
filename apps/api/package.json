@@ -5,7 +5,7 @@
   "scripts": {
     "build": "pnpm --filter @tami/shared build && nest build",
     "dev": "nest start --watch",
-    "lint": "eslint \"src/**/*.ts\"",
+    "lint": "pnpm run typecheck",
     "test": "pnpm --filter @tami/shared build && vitest run",
     "typecheck": "pnpm --filter @tami/shared build && tsc -p tsconfig.json --noEmit"
   },
@@ -21,7 +21,6 @@
     "@nestjs/cli": "11.0.10",
     "@nestjs/testing": "11.1.6",
     "@types/node": "24.10.1",
-    "eslint": "9.39.1",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
   }
