@@ -9,6 +9,7 @@ coverage
 .env.*
 !.env.example
 *.log
+*.tsbuildinfo
 ios/Pods
 android/.gradle
 android/app/build
