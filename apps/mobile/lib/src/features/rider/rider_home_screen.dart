@@ -14,10 +14,7 @@ class RiderHomeScreen extends StatelessWidget {
             children: [
               Text(
                 'Book a Tami ride',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 8),
               Text('Immediate and scheduled rides across Sindh.'),

@@ -6,6 +6,9 @@ void main() {
     await tester.pumpWidget(const TamiMobileApp(mode: TamiAppMode.driver));
 
     expect(find.text('Tami Driver'), findsOneWidget);
-    expect(find.text('Go online to receive assigned ride offers.'), findsOneWidget);
+    expect(
+      find.text('Go online to receive assigned ride offers.'),
+      findsOneWidget,
+    );
   });
 }

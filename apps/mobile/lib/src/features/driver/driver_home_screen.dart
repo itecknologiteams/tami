@@ -14,10 +14,7 @@ class DriverHomeScreen extends StatelessWidget {
             children: [
               Text(
                 'Tami Driver',
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
               ),
               SizedBox(height: 8),
               Text('Go online to receive assigned ride offers.'),

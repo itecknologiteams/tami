@@ -3,16 +3,10 @@ import 'package:flutter/material.dart';
 import '../features/driver/driver_home_screen.dart';
 import '../features/rider/rider_home_screen.dart';
 
-enum TamiAppMode {
-  rider,
-  driver,
-}
+enum TamiAppMode { rider, driver }
 
 class TamiMobileApp extends StatelessWidget {
-  const TamiMobileApp({
-    required this.mode,
-    super.key,
-  });
+  const TamiMobileApp({required this.mode, super.key});
 
   final TamiAppMode mode;
 

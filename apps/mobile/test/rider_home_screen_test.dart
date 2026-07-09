@@ -6,6 +6,9 @@ void main() {
     await tester.pumpWidget(const TamiMobileApp(mode: TamiAppMode.rider));
 
     expect(find.text('Book a Tami ride'), findsOneWidget);
-    expect(find.text('Immediate and scheduled rides across Sindh.'), findsOneWidget);
+    expect(
+      find.text('Immediate and scheduled rides across Sindh.'),
+      findsOneWidget,
+    );
   });
 }
