@@ -37,3 +37,7 @@ The approved platform design is in `docs/superpowers/specs/2026-07-09-tami-haili
 ## First Implementation Plan
 
 The first implementation plan is in `docs/superpowers/plans/2026-07-09-tami-foundation-core-mvp-implementation-plan.md`.
+
+## Mobile Direction
+
+Mobile apps are planned in Flutter/Dart from one shared codebase. The Flutter migration plan is in `docs/superpowers/plans/2026-07-09-tami-mobile-flutter-migration-plan.md`.

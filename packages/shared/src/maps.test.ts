@@ -13,4 +13,9 @@ describe("map provider config", () => {
   it("does not use maplibre-gl-js as the default web package decision", () => {
     expect(defaultSindhMapStyle.webPackage).not.toBe("maplibre-gl-js");
   });
+
+  it("uses Flutter as the mobile runtime direction", () => {
+    expect(defaultSindhMapStyle.mobileRuntime).toBe("flutter");
+    expect(defaultSindhMapStyle.mobilePackage).not.toBe("@maplibre/maplibre-react-native");
+  });
 });

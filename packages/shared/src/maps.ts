@@ -7,7 +7,8 @@ export type MapStyleId = "streets-v2";
 export type MapStyleConfig = {
   provider: MapProviderName;
   styleId: MapStyleId;
-  mobilePackage: "@maplibre/maplibre-react-native";
+  mobileRuntime: "flutter";
+  mobilePackage: "flutter_maplibre_pending";
   webPackage: "non_gl_admin_map_pending";
   styleUrlTemplate: string;
   defaultCenter: Coordinates;
@@ -17,7 +18,8 @@ export type MapStyleConfig = {
 export const defaultSindhMapStyle: MapStyleConfig = {
   provider: "maplibre_public",
   styleId: "streets-v2",
-  mobilePackage: "@maplibre/maplibre-react-native",
+  mobileRuntime: "flutter",
+  mobilePackage: "flutter_maplibre_pending",
   webPackage: "non_gl_admin_map_pending",
   styleUrlTemplate: "maplibre-public://styles/streets-v2",
   defaultCenter: {

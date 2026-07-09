@@ -515,8 +515,10 @@ Todos:
 
 The exact stack can be finalized before implementation. A practical starting point:
 
-- Mobile apps: React Native or Flutter for shared Android/iOS rider app development.
-- Driver app: Native Android or React Native Android-only build optimized for in-dash screen.
+- Mobile apps: Flutter with Dart for shared rider and driver mobile development.
+- Mobile structure: one Flutter project with separate rider and driver app flavors/entry points.
+- Rider app: Flutter Android and iOS app.
+- Driver app: Flutter Android-only build optimized for the in-dash screen.
 - Admin command center: React/Next.js web application.
 - Backend: Node.js/NestJS or Java/Spring Boot modular monolith.
 - Database: PostgreSQL with PostGIS for geospatial queries.

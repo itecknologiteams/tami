@@ -4,9 +4,22 @@
 
 **Goal:** Build the initial Tami Hailing development foundation: monorepo, shared domain model, backend API shell, ride state machine, real-time contract, and app shells for admin, rider, and driver.
 
-**Architecture:** Use a TypeScript pnpm monorepo with a NestJS modular backend, Next.js admin command center, React Native rider app, React Native Android driver app, and shared domain package. The first backend is a modular monolith with PostgreSQL/PostGIS, Prisma, Redis-ready boundaries, and strict ride state transition tests before any dispatch complexity is added.
+**Architecture:** Use a TypeScript pnpm monorepo with a NestJS modular backend, Next.js admin command center, Flutter mobile app, and shared domain package. The first backend is a modular monolith with PostgreSQL/PostGIS, Prisma, Redis-ready boundaries, and strict ride state transition tests before any dispatch complexity is added.
 
-**Tech Stack:** TypeScript, pnpm workspaces, NestJS, Prisma, PostgreSQL/PostGIS, Redis, Next.js, React, Tailwind CSS, React Native, MapLibre React Native, Zod, TanStack Query.
+**Tech Stack:** TypeScript, Dart, pnpm workspaces, Flutter, NestJS, Prisma, PostgreSQL/PostGIS, Redis, Next.js, React, Tailwind CSS, MapLibre-compatible Flutter maps, Zod, TanStack Query.
+
+## Mobile Stack Amendment
+
+2026-07-09 update: the mobile direction is changed from React Native to Flutter/Dart so rider and driver apps can share one mobile codebase. The React Native rider and driver scaffold tasks in this plan are superseded by `docs/superpowers/plans/2026-07-09-tami-mobile-flutter-migration-plan.md`.
+
+Updated mobile target:
+
+- Create one Flutter project at `apps/mobile`.
+- Build rider as Android/iOS Flutter app.
+- Build driver as Android-only Flutter app for infotainment.
+- Use app flavors or separate entry points for rider and driver.
+- Keep shared ride state, API, map, chat, auth, theme, and localization code inside the Flutter project.
+- Select a Flutter MapLibre package before implementing map screens.
 
 ## Global Constraints
 
@@ -43,8 +56,7 @@ This plan covers the first executable development slice. It does not complete th
 - Create: `.editorconfig` for consistent editing rules.
 - Create: `apps/api` for the NestJS backend.
 - Create: `apps/admin` for the Next.js admin command center.
-- Create: `apps/rider` for the React Native rider app.
-- Create: `apps/driver` for the React Native Android driver app.
+- Create: `apps/mobile` for the Flutter rider and driver app variants. The earlier React Native `apps/rider` and `apps/driver` scaffolds are superseded by the Flutter migration plan.
 - Create: `packages/shared` for domain types, schemas, and ride state logic.
 - Create: `packages/config` for shared TypeScript and lint configuration.
 - Modify: `tech_stack.md` only when a stack decision changes.
@@ -920,7 +932,9 @@ git commit -m "feat: scaffold admin command center"
 
 ---
 
-### Task 6: Scaffold Rider App Shell
+### Task 6: Scaffold Rider App Shell (Superseded)
+
+This task was superseded by the Flutter mobile migration plan. Do not use it for new implementation.
 
 **Files:**
 - Create: `apps/rider/package.json`
@@ -1055,7 +1069,9 @@ git commit -m "feat: scaffold rider app"
 
 ---
 
-### Task 7: Scaffold Driver Android App Shell
+### Task 7: Scaffold Driver Android App Shell (Superseded)
+
+This task was superseded by the Flutter mobile migration plan. Do not use it for new implementation.
 
 **Files:**
 - Create: `apps/driver/package.json`
@@ -1406,4 +1422,3 @@ Known follow-up plans:
 - Driver ride offer and navigation UI.
 - Admin live operations dashboard.
 - Pricing and payment reconciliation.
-

@@ -17,13 +17,14 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 ### Monorepo
 
 - Package manager: pnpm workspaces, pinned in `package.json` as `pnpm@10.32.0`.
-- Language: TypeScript across backend, web, and React Native apps.
+- Languages:
+  - TypeScript for backend, admin web, and shared server/web domain packages.
+  - Dart for mobile apps.
 - TypeScript: `5.9.3`.
 - Repository layout:
   - `apps/api` for the backend API.
   - `apps/admin` for the admin command center.
-  - `apps/rider` for the rider mobile app.
-  - `apps/driver` for the Android driver app.
+  - `apps/mobile` for the Flutter rider and driver mobile apps.
   - `packages/shared` for shared domain types and validation schemas.
   - `packages/config` for shared linting, TypeScript, and formatting configuration.
 
@@ -51,17 +52,35 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 - Charts: Recharts or another lightweight React charting library.
 - Forms: React Hook Form with Zod validation.
 
-### Rider App
+### Mobile Apps
 
-- Framework: React Native `0.86.0` with TypeScript.
-- Navigation: React Navigation.
-- State/data fetching: TanStack Query.
-- Forms: React Hook Form with Zod validation.
-- Native builds must support MapLibre React Native and production push notifications.
+- Framework: Flutter with Dart.
+- Structure: one Flutter project at `apps/mobile`.
+- App variants:
+  - Rider app: Android and iOS.
+  - Driver app: Android-only build for the in-dash infotainment system.
+- Entry points:
+  - `lib/main_rider.dart`
+  - `lib/main_driver.dart`
+- Shared code:
+  - API client
+  - authentication/session handling
+  - ride state models
+  - map/location widgets
+  - chat client
+  - theme primitives
+  - localization
+- Separate code:
+  - rider booking workflow
+  - driver ride-offer workflow
+  - driver in-dash UX
+- State management: Riverpod or Bloc, to be finalized before mobile implementation starts.
+- Routing: go_router or Flutter Navigator 2.0, to be finalized before mobile implementation starts.
+- Native builds must support MapLibre maps, production push notifications, location permissions, and Android driver-device deployment.
 
-### Driver App
+### Driver App UX
 
-- Framework: React Native `0.86.0` with TypeScript, Android target only.
+- The driver app is a Flutter Android target optimized for the infotainment screen.
 - UI must be optimized for in-dash use:
   - large touch targets
   - clear ride state controls
@@ -80,16 +99,16 @@ Project requirement from product owner:
 
 Current implementation direction:
 
-- Mobile rider app: `@maplibre/maplibre-react-native`.
-- Android driver app: `@maplibre/maplibre-react-native`.
-- Mobile MapLibre package version: `@maplibre/maplibre-react-native@11.3.6`.
+- Mobile rider app: Flutter MapLibre package, final package to be chosen before implementation.
+- Android driver app: same Flutter MapLibre package as the rider app.
+- Do not use the old React Native MapLibre package path for new mobile work.
 - Requested style family: `streets-v2`.
 - Admin command center: prefer a non-GL/static or server-rendered map approach for the first admin dashboard if possible; if rich live vector maps are required later, revisit this decision explicitly before introducing `maplibre-gl-js`.
 - Map styles: use public/open map styles approved for Sindh operations.
 - Location storage: store coordinates with PostgreSQL/PostGIS.
 - Route calculation/navigation provider: to be selected separately because MapLibre renders maps but does not by itself provide full routing.
 
-Note: MapLibre React Native renders through MapLibre Native and uses components such as `Map`, `Camera`, and `UserLocation`. It accepts a `mapStyle` URL or style JSON. This is different from choosing `maplibre-gl-js` as a web dependency.
+Note: Flutter is now the mobile standard. Any existing React Native mobile scaffold is transitional and should be replaced by `apps/mobile` before real rider or driver feature work continues.
 
 ## Payments
 
