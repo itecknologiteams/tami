@@ -27,6 +27,26 @@ pnpm build
 pnpm lint
 ```
 
+## Backend Data Spine
+
+The backend uses Prisma `6.19.2` with PostgreSQL/PostGIS as the target database.
+
+```bash
+cd apps/api
+cp .env.example .env
+pnpm prisma:validate
+pnpm prisma:generate
+pnpm prisma:seed
+```
+
+The first Prisma schema defines cities, zones, ride categories, riders, drivers, vehicles, rides, ride state transition audit records, and payment records.
+
+For local validation without a running database:
+
+```bash
+DATABASE_URL="postgresql://tami:tami@localhost:5432/tami" pnpm --filter @tami/api prisma:validate
+```
+
 ## Stack Guardrails
 
 Read `tech_stack.md` before adding new frameworks, map libraries, payment providers, or backend services.
