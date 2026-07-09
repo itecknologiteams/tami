@@ -99,8 +99,9 @@ Project requirement from product owner:
 
 Current implementation direction:
 
-- Mobile rider app: Flutter MapLibre package, final package to be chosen before implementation.
-- Android driver app: same Flutter MapLibre package as the rider app.
+- Mobile rider app: `maplibre` Flutter package.
+- Android driver app: same `maplibre` Flutter package as the rider app.
+- Mobile MapLibre package version: `maplibre@0.3.5`.
 - Do not use the old React Native MapLibre package path for new mobile work.
 - Requested style family: `streets-v2`.
 - Admin command center: prefer a non-GL/static or server-rendered map approach for the first admin dashboard if possible; if rich live vector maps are required later, revisit this decision explicitly before introducing `maplibre-gl-js`.
