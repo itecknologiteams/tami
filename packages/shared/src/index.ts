@@ -1,5 +1,11 @@
 export type { Coordinates } from "./geo";
 export type {
+  MapProviderName,
+  MapStyleConfig,
+  MapStyleId,
+} from "./maps";
+export { defaultSindhMapStyle } from "./maps";
+export type {
   ExceptionRideState,
   NormalRideState,
   RideState,
