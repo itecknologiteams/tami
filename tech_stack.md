@@ -33,7 +33,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 - Runtime: Node.js LTS.
 - Framework: NestJS modular monolith, currently pinned to NestJS `11.1.6`.
 - Database: PostgreSQL with PostGIS.
-- ORM: Prisma.
+- ORM: Prisma `6.19.2`.
 - Cache and queues: Redis.
 - Real-time transport: WebSockets through the backend, using authenticated channels.
 - Validation: Zod for shared request/domain validation where practical.

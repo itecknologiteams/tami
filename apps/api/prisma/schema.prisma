@@ -1,0 +1,206 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RideState {
+  requested
+  matching
+  offered_to_driver
+  accepted
+  driver_en_route_to_pickup
+  arrived_at_pickup
+  rider_onboarded
+  in_progress
+  arrived_at_destination
+  payment_pending
+  completed
+  cancelled_by_rider
+  cancelled_by_driver
+  cancelled_by_admin
+  no_show
+  driver_timeout
+  payment_failed
+  disputed
+  incident_reported
+}
+
+enum RideCategoryCode {
+  standard_taxi
+  women_family_preferred
+  airport
+  accessible_special_assistance
+  government_staff_movement
+  scheduled_ride
+}
+
+enum PaymentMethod {
+  cash
+  jazzcash
+  easypaisa
+  nayapay
+}
+
+enum PaymentStatus {
+  pending
+  authorized
+  paid
+  failed
+  refunded
+  disputed
+}
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  province  String   @default("Sindh")
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  zones    Zone[]
+  riders   Rider[]
+  drivers  Driver[]
+  vehicles Vehicle[]
+  rides    Ride[]
+}
+
+model Zone {
+  id        String   @id @default(cuid())
+  cityId    String
+  name      String
+  slug      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city  City   @relation(fields: [cityId], references: [id])
+  rides Ride[]
+
+  @@unique([cityId, slug])
+}
+
+model RideCategory {
+  id          String           @id @default(cuid())
+  code        RideCategoryCode @unique
+  name        String
+  description String
+  active      Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  rides Ride[]
+}
+
+model Rider {
+  id        String   @id @default(cuid())
+  cityId    String
+  phone     String   @unique
+  name      String?
+  email     String?
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city  City   @relation(fields: [cityId], references: [id])
+  rides Ride[]
+}
+
+model Driver {
+  id        String   @id @default(cuid())
+  cityId    String
+  phone     String   @unique
+  name      String
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city     City      @relation(fields: [cityId], references: [id])
+  vehicles Vehicle[]
+  rides    Ride[]
+}
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  cityId    String
+  driverId  String?
+  plateNo   String   @unique
+  fleetNo   String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  city   City    @relation(fields: [cityId], references: [id])
+  driver Driver? @relation(fields: [driverId], references: [id])
+  rides  Ride[]
+}
+
+model Ride {
+  id                   String    @id @default(cuid())
+  cityId               String
+  zoneId               String?
+  riderId              String
+  driverId             String?
+  vehicleId            String?
+  categoryId           String
+  state                RideState @default(requested)
+  pickupLatitude       Decimal   @db.Decimal(9, 6)
+  pickupLongitude      Decimal   @db.Decimal(9, 6)
+  pickupAddress        String
+  destinationLatitude  Decimal   @db.Decimal(9, 6)
+  destinationLongitude Decimal   @db.Decimal(9, 6)
+  destinationAddress   String
+  scheduledPickupAt    DateTime?
+  estimatedFareMinor   Int?
+  finalFareMinor       Int?
+  currency             String    @default("PKR")
+  requestedAt          DateTime  @default(now())
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  city        City                  @relation(fields: [cityId], references: [id])
+  zone        Zone?                 @relation(fields: [zoneId], references: [id])
+  rider       Rider                 @relation(fields: [riderId], references: [id])
+  driver      Driver?               @relation(fields: [driverId], references: [id])
+  vehicle     Vehicle?              @relation(fields: [vehicleId], references: [id])
+  category    RideCategory          @relation(fields: [categoryId], references: [id])
+  transitions RideStateTransition[]
+  payments    PaymentRecord[]
+}
+
+model RideStateTransition {
+  id         String    @id @default(cuid())
+  rideId     String
+  fromState  RideState?
+  toState    RideState
+  actorType  String
+  actorId    String
+  reason     String?
+  latitude   Decimal?  @db.Decimal(9, 6)
+  longitude  Decimal?  @db.Decimal(9, 6)
+  source     String?
+  occurredAt DateTime  @default(now())
+  createdAt  DateTime  @default(now())
+
+  ride Ride @relation(fields: [rideId], references: [id])
+}
+
+model PaymentRecord {
+  id            String        @id @default(cuid())
+  rideId        String
+  method        PaymentMethod
+  status        PaymentStatus @default(pending)
+  amountMinor   Int
+  currency      String        @default("PKR")
+  providerRef   String?
+  collectedById String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  ride Ride @relation(fields: [rideId], references: [id])
+}
