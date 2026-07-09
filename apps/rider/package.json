@@ -1,0 +1,23 @@
+{
+  "name": "@tami/rider",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "react-native start",
+    "android": "react-native run-android",
+    "ios": "react-native run-ios",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@maplibre/maplibre-react-native": "11.3.6",
+    "@tami/shared": "workspace:*",
+    "react": "19.2.7",
+    "react-native": "0.86.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.17",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  }
+}
