@@ -9,7 +9,7 @@ export class InMemoryBookingRepository extends BookingRepository {
   readonly rides: BookingRide[] = [];
   readonly transitions: BookingRideTransition[] = [];
 
-  async createRide(
+  async createRideWithInitialTransition(
     request: CreateRideRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
@@ -26,6 +26,16 @@ export class InMemoryBookingRepository extends BookingRepository {
     };
 
     this.rides.push(ride);
+    this.transitions.push({
+      id: `transition_${this.transitions.length + 1}`,
+      rideId: ride.id,
+      fromState: null,
+      toState: "requested",
+      actorType: "rider",
+      actorId: request.riderId,
+      occurredAt: requestedAt,
+    });
+
     return ride;
   }
 

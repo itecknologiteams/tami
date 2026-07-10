@@ -4,7 +4,7 @@
 
 **Goal:** Persist booking API rides and their initial audit transition in PostgreSQL through Prisma, with a reproducible local PostGIS environment.
 
-**Architecture:** The booking service remains independent of Prisma and depends on `BookingRepository`. Production NestJS wiring supplies `PrismaBookingRepository`, which translates between Prisma records and the existing booking domain types; unit tests continue to use `InMemoryBookingRepository` or a small Prisma-shaped fake. A Docker Compose PostGIS service provides the local database, while Prisma migrations create the schema.
+**Architecture:** The booking service remains independent of Prisma and depends on `BookingRepository`. Production NestJS wiring supplies `PrismaBookingRepository`, which translates between Prisma records and the existing booking domain types; it creates the ride and initial rider audit event in one database transaction. Unit tests continue to use `InMemoryBookingRepository` or a small Prisma-shaped fake. A Docker Compose PostGIS service provides the local database, while Prisma migrations create the schema.
 
 **Tech Stack:** NestJS 11.1.6, TypeScript 5.9.3, Prisma 6.19.2, PostgreSQL 16 with PostGIS 3.4, Docker Compose, Vitest 3.2.4.
 
@@ -31,7 +31,7 @@
 - Consumes: `apps/api/.env.example` with `DATABASE_URL`.
 - Produces: `docker compose up -d postgres`, `pnpm --filter @tami/api prisma:migrate:dev`, and documented startup steps.
 
-- [ ] **Step 1: Add the PostGIS Compose definition**
+- [x] **Step 1: Add the PostGIS Compose definition**
 
 ```yaml
 services:
@@ -42,7 +42,7 @@ services:
       POSTGRES_USER: tami
       POSTGRES_PASSWORD: tami
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5434:5432"
     volumes:
       - tami-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -55,30 +55,30 @@ volumes:
   tami-postgres-data:
 ```
 
-- [ ] **Step 2: Add Prisma migration scripts**
+- [x] **Step 2: Add Prisma migration scripts**
 
 ```json
 "prisma:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
 "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma"
 ```
 
-- [ ] **Step 3: Document the exact local sequence**
+- [x] **Step 3: Document the exact local sequence**
 
 ```bash
 docker compose up -d postgres
 cd apps/api
 cp .env.example .env
-pnpm prisma:migrate:dev -- --name init
+pnpm prisma:migrate:deploy
 pnpm prisma:seed
 ```
 
-- [ ] **Step 4: Verify the Compose definition**
+- [x] **Step 4: Verify the Compose definition**
 
 Run: `docker compose config`
 
 Expected: exit code 0 and a rendered `postgres` service.
 
-- [ ] **Step 5: Commit the workflow**
+- [x] **Step 5: Commit the workflow**
 
 ```bash
 git add docker-compose.yml apps/api/package.json README.md
@@ -95,23 +95,24 @@ git commit -m "chore: add local postgis workflow"
 - Modify: `apps/api/package.json`
 
 **Interfaces:**
-- Consumes: `BookingRepository.createRide(request, requestedAt)` and `BookingRepository.recordTransition(transition)`.
-- Produces: `PrismaBookingRepository extends BookingRepository`, using `PrismaService` for `ride.create` and `rideStateTransition.create`.
+- Consumes: `BookingRepository.createRideWithInitialTransition(request, requestedAt)` and `BookingRepository.recordTransition(transition)`.
+- Produces: `PrismaBookingRepository extends BookingRepository`, using `PrismaService.$transaction` for `ride.create` and `rideStateTransition.create`.
 
-- [ ] **Step 1: Write a failing repository test for ride creation**
+- [x] **Step 1: Write a failing repository test for ride creation**
 
 ```ts
-it("maps a booking request to a Prisma ride record", async () => {
+it("creates a requested ride and audit transition in one transaction", async () => {
   const prisma = createPrismaFake();
   const repository = new PrismaBookingRepository(prisma);
 
-  await repository.createRide(baseRequest, requestedAt);
+  await repository.createRideWithInitialTransition(baseRequest, requestedAt);
 
+  expect(prisma.$transaction).toHaveBeenCalledOnce();
   expect(prisma.ride.create).toHaveBeenCalledWith(
     expect.objectContaining({
       data: expect.objectContaining({
-        cityId: "city_karachi",
-        riderId: "rider_123",
+        city: { connect: { id: "city_karachi" } },
+        rider: { connect: { id: "rider_123" } },
         category: { connect: { code: "standard_taxi" } },
         state: "requested",
       }),
@@ -120,13 +121,13 @@ it("maps a booking request to a Prisma ride record", async () => {
 });
 ```
 
-- [ ] **Step 2: Run the repository test and verify it fails**
+- [x] **Step 2: Run the repository test and verify it fails**
 
 Run: `pnpm --filter @tami/api exec vitest run src/bookings/prisma-booking.repository.spec.ts`
 
 Expected: FAIL because `PrismaBookingRepository` does not exist.
 
-- [ ] **Step 3: Write a failing transition-recording test**
+- [x] **Step 3: Write a failing transition-recording test**
 
 ```ts
 it("writes the requested audit transition", async () => {
@@ -146,7 +147,7 @@ it("writes the requested audit transition", async () => {
 });
 ```
 
-- [ ] **Step 4: Add Prisma service and repository implementation**
+- [x] **Step 4: Add Prisma service and repository implementation**
 
 ```ts
 @Injectable()
@@ -168,31 +169,43 @@ export class PrismaBookingRepository extends BookingRepository {
     super();
   }
 
-  async createRide(request: CreateRideRequest, requestedAt: string): Promise<BookingRide> {
-    const ride = await this.prisma.ride.create({
-      data: {
-        cityId: request.cityId,
-        riderId: request.riderId,
-        category: { connect: { code: request.categoryCode } },
-        state: "requested",
-        pickupLatitude: request.pickup.latitude,
-        pickupLongitude: request.pickup.longitude,
-        pickupAddress: request.pickup.address,
-        destinationLatitude: request.destination.latitude,
-        destinationLongitude: request.destination.longitude,
-        destinationAddress: request.destination.address,
-        scheduledPickupAt: request.scheduledPickupAt ? new Date(request.scheduledPickupAt) : null,
-        requestedAt: new Date(requestedAt),
-      },
-      include: { category: true },
-    });
+  async createRideWithInitialTransition(request: CreateRideRequest, requestedAt: string): Promise<BookingRide> {
+    return this.prisma.$transaction(async (transaction) => {
+      const ride = await transaction.ride.create({
+        data: {
+          city: { connect: { id: request.cityId } },
+          rider: { connect: { id: request.riderId } },
+          category: { connect: { code: request.categoryCode } },
+          state: "requested",
+          pickupLatitude: request.pickup.latitude,
+          pickupLongitude: request.pickup.longitude,
+          pickupAddress: request.pickup.address,
+          destinationLatitude: request.destination.latitude,
+          destinationLongitude: request.destination.longitude,
+          destinationAddress: request.destination.address,
+          scheduledPickupAt: request.scheduledPickupAt ? new Date(request.scheduledPickupAt) : null,
+          requestedAt: new Date(requestedAt),
+        },
+        include: { category: true },
+      });
+      await transaction.rideStateTransition.create({
+        data: {
+          rideId: ride.id,
+          fromState: null,
+          toState: "requested",
+          actorType: "rider",
+          actorId: request.riderId,
+          occurredAt: new Date(requestedAt),
+        },
+      });
 
-    return toBookingRide(ride);
+      return toBookingRide(ride);
+    });
   }
 }
 ```
 
-- [ ] **Step 5: Wire Prisma into the application module**
+- [x] **Step 5: Wire Prisma into the application module**
 
 ```ts
 providers: [
@@ -205,19 +218,19 @@ providers: [
 ]
 ```
 
-- [ ] **Step 6: Generate the Prisma client before API build, test, and typecheck**
+- [x] **Step 6: Generate the Prisma client before API build, test, and typecheck**
 
 ```json
 "test": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run"
 ```
 
-- [ ] **Step 7: Run the repository test and API suite**
+- [x] **Step 7: Run the repository test and API suite**
 
 Run: `pnpm --filter @tami/api exec vitest run src/bookings/prisma-booking.repository.spec.ts && pnpm --filter @tami/api test`
 
 Expected: all tests pass without a running database.
 
-- [ ] **Step 8: Commit the repository slice**
+- [x] **Step 8: Commit the repository slice**
 
 ```bash
 git add apps/api/src/prisma apps/api/src/bookings/prisma-booking.repository.ts apps/api/src/bookings/prisma-booking.repository.spec.ts apps/api/src/app.module.ts apps/api/package.json
@@ -234,25 +247,25 @@ git commit -m "feat: persist bookings with prisma"
 - Consumes: local `postgres` Docker service and `apps/api/prisma/schema.prisma`.
 - Produces: a versioned initial Prisma migration and a seeded local database.
 
-- [ ] **Step 1: Start PostgreSQL/PostGIS and wait for health**
+- [x] **Step 1: Start PostgreSQL/PostGIS and wait for health**
 
 Run: `docker compose up -d postgres && docker compose ps`
 
 Expected: `postgres` reports `healthy`.
 
-- [ ] **Step 2: Create the initial migration and seed the database**
+- [x] **Step 2: Create the initial migration and seed the database**
 
-Run: `cd apps/api && DATABASE_URL="postgresql://tami:tami@localhost:5432/tami" pnpm prisma:migrate:dev -- --name init && DATABASE_URL="postgresql://tami:tami@localhost:5432/tami" pnpm prisma:seed`
+Run: `cd apps/api && DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm exec prisma migrate dev --schema prisma/schema.prisma --name init && DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm prisma:seed`
 
 Expected: migration applied and five Sindh cities plus ride categories seeded.
 
-- [ ] **Step 3: Run schema and workspace verification**
+- [x] **Step 3: Run schema and workspace verification**
 
-Run: `DATABASE_URL="postgresql://tami:tami@localhost:5432/tami" pnpm --filter @tami/api prisma:validate && pnpm test && pnpm typecheck && pnpm build && pnpm lint && pnpm mobile:test && pnpm mobile:analyze`
+Run: `DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm --filter @tami/api prisma:validate && pnpm test && pnpm typecheck && pnpm build && pnpm lint && pnpm mobile:test && pnpm mobile:analyze`
 
 Expected: all commands exit 0.
 
-- [ ] **Step 4: Commit the migration and documentation**
+- [x] **Step 4: Commit the migration and documentation**
 
 ```bash
 git add apps/api/prisma/migrations README.md docs/superpowers/plans/2026-07-10-tami-prisma-booking-persistence-plan.md

@@ -3,14 +3,17 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "build": "pnpm --filter @tami/shared build && nest build",
+    "build": "pnpm --filter @tami/shared build && pnpm run prisma:generate && nest build",
     "dev": "nest start --watch",
     "lint": "pnpm run typecheck",
     "prisma:generate": "prisma generate --schema prisma/schema.prisma",
+    "prisma:migrate:deploy": "prisma migrate deploy --schema prisma/schema.prisma",
+    "prisma:migrate:dev": "prisma migrate dev --schema prisma/schema.prisma",
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
-    "test": "pnpm --filter @tami/shared build && vitest run",
-    "typecheck": "pnpm --filter @tami/shared build && tsc -p tsconfig.json --noEmit"
+    "test": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run",
+    "test:integration": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run src/bookings/prisma-booking.repository.integration.spec.ts",
+    "typecheck": "pnpm --filter @tami/shared build && pnpm run prisma:generate && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@nestjs/common": "11.1.6",

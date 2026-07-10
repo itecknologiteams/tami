@@ -32,11 +32,23 @@ pnpm lint
 The backend uses Prisma `6.19.2` with PostgreSQL/PostGIS as the target database.
 
 ```bash
+docker compose up -d postgres
 cd apps/api
 cp .env.example .env
+pnpm prisma:migrate:deploy
 pnpm prisma:validate
 pnpm prisma:generate
 pnpm prisma:seed
+```
+
+`docker compose ps` shows the local PostGIS service health. The seeded database includes the first five Sindh launch cities and the initial ride categories.
+
+Create a migration for a deliberate schema change with `pnpm prisma:migrate:dev -- --name <change-name>`.
+
+Run the database integration test against the local service with:
+
+```bash
+DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" RUN_DATABASE_TESTS=true pnpm --filter @tami/api test:integration
 ```
 
 The first Prisma schema defines cities, zones, ride categories, riders, drivers, vehicles, rides, ride state transition audit records, and payment records.
@@ -44,7 +56,7 @@ The first Prisma schema defines cities, zones, ride categories, riders, drivers,
 For local validation without a running database:
 
 ```bash
-DATABASE_URL="postgresql://tami:tami@localhost:5432/tami" pnpm --filter @tami/api prisma:validate
+DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm --filter @tami/api prisma:validate
 ```
 
 ## Stack Guardrails
