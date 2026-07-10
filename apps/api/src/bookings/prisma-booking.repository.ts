@@ -4,7 +4,7 @@ import { BookingRepository } from "./booking.repository";
 import {
   BookingRide,
   BookingRideTransition,
-  CreateRideRequest,
+  CreateRideForRiderRequest,
 } from "./booking.types";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -45,7 +45,7 @@ export class PrismaBookingRepository extends BookingRepository {
   }
 
   async createRideWithInitialTransition(
-    request: CreateRideRequest,
+    request: CreateRideForRiderRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
     return this.prisma.$transaction(async (transaction) => {

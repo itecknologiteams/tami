@@ -1,12 +1,12 @@
 import {
   BookingRide,
   BookingRideTransition,
-  CreateRideRequest,
+  CreateRideForRiderRequest,
 } from "./booking.types";
 
 export abstract class BookingRepository {
   abstract createRideWithInitialTransition(
-    request: CreateRideRequest,
+    request: CreateRideForRiderRequest,
     requestedAt: string,
   ): Promise<BookingRide>;
 

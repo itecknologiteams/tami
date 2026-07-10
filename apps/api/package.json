@@ -12,7 +12,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:validate": "prisma validate --schema prisma/schema.prisma",
     "test": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run",
-    "test:integration": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run src/bookings/prisma-booking.repository.integration.spec.ts",
+    "test:integration": "pnpm --filter @tami/shared build && pnpm run prisma:generate && vitest run src/auth/auth.integration.spec.ts src/bookings/prisma-booking.repository.integration.spec.ts",
     "typecheck": "pnpm --filter @tami/shared build && pnpm run prisma:generate && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {

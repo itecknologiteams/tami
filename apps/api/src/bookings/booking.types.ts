@@ -15,12 +15,15 @@ export type Coordinates = {
 };
 
 export type CreateRideRequest = {
-  cityId: string;
-  riderId: string;
   categoryCode: RideCategoryCode;
   pickup: Coordinates;
   destination: Coordinates;
   scheduledPickupAt?: string;
+};
+
+export type CreateRideForRiderRequest = CreateRideRequest & {
+  cityId: string;
+  riderId: string;
 };
 
 export type BookingRide = {

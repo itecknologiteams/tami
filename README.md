@@ -51,6 +51,17 @@ Run the database integration test against the local service with:
 DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" RUN_DATABASE_TESTS=true pnpm --filter @tami/api test:integration
 ```
 
+## Rider Development Login
+
+The current rider login flow is development-only. It returns a six-digit code from `POST /auth/rider/otp`, then exchanges the code and a selected city ID at `POST /auth/rider/verify` for a Tami bearer token. Do not expose this code-returning flow in a public deployment; replace it with a real OTP provider before launch.
+
+The rider app reads its API URL from `TAMI_API_BASE_URL`. The Android emulator default is `http://10.0.2.2:4000`; provide an appropriate value for iOS simulators and physical devices:
+
+```bash
+cd apps/mobile
+flutter run --target lib/main_rider.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
+```
+
 The first Prisma schema defines cities, zones, ride categories, riders, drivers, vehicles, rides, ride state transition audit records, and payment records.
 
 For local validation without a running database:

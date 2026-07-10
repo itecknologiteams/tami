@@ -2,7 +2,7 @@ import { BookingRepository } from "./booking.repository";
 import {
   BookingRide,
   BookingRideTransition,
-  CreateRideRequest,
+  CreateRideForRiderRequest,
 } from "./booking.types";
 
 export class InMemoryBookingRepository extends BookingRepository {
@@ -10,7 +10,7 @@ export class InMemoryBookingRepository extends BookingRepository {
   readonly transitions: BookingRideTransition[] = [];
 
   async createRideWithInitialTransition(
-    request: CreateRideRequest,
+    request: CreateRideForRiderRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
     const ride: BookingRide = {

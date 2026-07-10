@@ -32,7 +32,7 @@
 - Produces `RiderSession`, `AuthService.requestOtp(phone)`, and `AuthService.verifyRider(request)`.
 - Produces `AuthenticatedRider { id, cityId, phone }` and an opaque access token.
 
-- [ ] **Step 1: Write failing OTP/session tests**
+- [x] **Step 1: Write failing OTP/session tests**
 
 ```ts
 it("issues a five-minute development code and exchanges it for a hashed session", async () => {
@@ -48,13 +48,13 @@ it("issues a five-minute development code and exchanges it for a hashed session"
 });
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `pnpm --filter @tami/api exec vitest run src/auth/auth.service.spec.ts`
 
 Expected: FAIL because `AuthService` does not exist.
 
-- [ ] **Step 3: Implement the schema and minimal auth domain**
+- [x] **Step 3: Implement the schema and minimal auth domain**
 
 ```prisma
 model RiderSession {
@@ -72,7 +72,7 @@ model RiderSession {
 
 Use `randomInt(100000, 1000000)` for the code, `randomBytes(32).toString("base64url")` for the raw token, and `createHash("sha256")` for stored tokens.
 
-- [ ] **Step 4: Run the focused test**
+- [x] **Step 4: Run the focused test**
 
 Run: `pnpm --filter @tami/api exec vitest run src/auth/auth.service.spec.ts`
 
@@ -93,7 +93,7 @@ Expected: PASS.
 - Produces `POST /auth/rider/otp`, `POST /auth/rider/verify`, `GET /rider/me`, and `PUT /rider/me`.
 - The guard attaches `AuthenticatedRider` after validating `Authorization: Bearer <token>`.
 
-- [ ] **Step 1: Write failing controller/profile tests**
+- [x] **Step 1: Write failing controller/profile tests**
 
 ```ts
 it("returns the authenticated rider profile", async () => {
@@ -103,17 +103,17 @@ it("returns the authenticated rider profile", async () => {
 });
 ```
 
-- [ ] **Step 2: Run tests and verify they fail**
+- [x] **Step 2: Run tests and verify they fail**
 
 Run: `pnpm --filter @tami/api exec vitest run src/auth/auth.controller.spec.ts src/riders/rider-profile.service.spec.ts`
 
 Expected: FAIL because the controllers and profile service do not exist.
 
-- [ ] **Step 3: Implement token guard and profile endpoints**
+- [x] **Step 3: Implement token guard and profile endpoints**
 
 The guard rejects missing, expired, and revoked sessions with HTTP 401. The profile endpoint only permits city, name, email, and image URL updates; it rejects inactive cities.
 
-- [ ] **Step 4: Run API unit tests**
+- [x] **Step 4: Run API unit tests**
 
 Run: `pnpm --filter @tami/api test`
 
@@ -131,7 +131,7 @@ Expected: PASS.
 - Public `CreateRideRequest` excludes `cityId` and `riderId`.
 - Internal booking request combines public data with `AuthenticatedRider`.
 
-- [ ] **Step 1: Write the failing authenticated booking test**
+- [x] **Step 1: Write the failing authenticated booking test**
 
 ```ts
 it("uses identity from the bearer session rather than the request body", async () => {
@@ -142,17 +142,17 @@ it("uses identity from the bearer session rather than the request body", async (
 });
 ```
 
-- [ ] **Step 2: Run the test and verify it fails**
+- [x] **Step 2: Run the test and verify it fails**
 
 Run: `pnpm --filter @tami/api exec vitest run src/bookings/booking.controller.spec.ts`
 
 Expected: FAIL because caller-supplied identity is still required.
 
-- [ ] **Step 3: Implement the guarded endpoint and update tests**
+- [x] **Step 3: Implement the guarded endpoint and update tests**
 
 Use `@UseGuards(RiderAuthGuard)` on `POST /bookings/rides`; combine the authenticated rider with pickup, destination, category, and optional schedule before calling `BookingService`.
 
-- [ ] **Step 4: Run API tests and typecheck**
+- [x] **Step 4: Run API tests and typecheck**
 
 Run: `pnpm --filter @tami/api test && pnpm --filter @tami/api typecheck`
 
@@ -165,13 +165,13 @@ Expected: PASS.
 - Create: `apps/api/src/auth/auth.integration.spec.ts`
 - Modify: `apps/api/package.json`
 
-- [ ] **Step 1: Create the migration**
+- [x] **Step 1: Create the migration**
 
 Run: `cd apps/api && DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm exec prisma migrate dev --schema prisma/schema.prisma --name rider_sessions`
 
 Expected: Prisma creates the session migration and updates its client.
 
-- [ ] **Step 2: Write and run the database integration test**
+- [x] **Step 2: Write and run the database integration test**
 
 ```ts
 it("persists a hashed session that authenticates a rider-owned booking", async () => {
@@ -198,7 +198,7 @@ Expected: PASS.
 - Modify: `apps/mobile/lib/main_rider.dart`
 - Create: `apps/mobile/test/rider_onboarding_screen_test.dart`
 
-- [ ] **Step 1: Write the failing onboarding test**
+- [x] **Step 1: Write the failing onboarding test**
 
 ```dart
 testWidgets('shows rider home after code verification and profile save', (tester) async {
@@ -211,15 +211,15 @@ testWidgets('shows rider home after code verification and profile save', (tester
 });
 ```
 
-- [ ] **Step 2: Implement the injected API client and session model**
+- [x] **Step 2: Implement the injected API client and session model**
 
 Use `package:http` for `POST /auth/rider/otp`, `POST /auth/rider/verify`, `GET /rider/me`, and `PUT /rider/me`. The client sends its Tami bearer token for profile calls and is replaceable with a fake in tests.
 
-- [ ] **Step 3: Implement onboarding flow**
+- [x] **Step 3: Implement onboarding flow**
 
 Present phone, code, active-city, name, optional email, and optional image URL fields in sequence. Show the development code only when the API returns it. Navigate to `RiderHomeScreen` after profile save.
 
-- [ ] **Step 4: Run Flutter checks**
+- [x] **Step 4: Run Flutter checks**
 
 Run: `cd apps/mobile && flutter pub get && flutter test && flutter analyze`
 
@@ -231,11 +231,11 @@ Expected: PASS.
 - Modify: `README.md`
 - Modify: `tech_stack.md`
 
-- [ ] **Step 1: Document development authentication**
+- [x] **Step 1: Document development authentication**
 
 Document the local OTP endpoints, the `127.0.0.1:5434` database workflow, and that H3 assessment belongs to the dispatch/matching plan.
 
-- [ ] **Step 2: Run full verification**
+- [x] **Step 2: Run full verification**
 
 Run: `pnpm test && pnpm typecheck && pnpm build && pnpm lint && pnpm mobile:test && pnpm mobile:analyze`
 

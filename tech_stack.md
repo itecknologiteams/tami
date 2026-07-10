@@ -108,6 +108,7 @@ Current implementation direction:
 - Map styles: use public/open map styles approved for Sindh operations.
 - Location storage: store coordinates with PostgreSQL/PostGIS.
 - Route calculation/navigation provider: to be selected separately because MapLibre renders maps but does not by itself provide full routing.
+- Driver search and dispatch matching: evaluate Uber H3 when the dispatch module begins. It is not introduced in booking or identity flows.
 
 Note: Flutter is now the mobile standard. Any existing React Native mobile scaffold is transitional and should be replaced by `apps/mobile` before real rider or driver feature work continues.
 

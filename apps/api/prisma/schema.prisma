@@ -109,6 +109,19 @@ model Rider {
 
   city  City   @relation(fields: [cityId], references: [id])
   rides Ride[]
+  sessions RiderSession[]
+}
+
+model RiderSession {
+  id         String    @id @default(cuid())
+  riderId    String
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  rider Rider @relation(fields: [riderId], references: [id], onDelete: Cascade)
 }
 
 model Driver {

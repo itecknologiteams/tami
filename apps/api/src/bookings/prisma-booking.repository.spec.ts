@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { PrismaBookingRepository } from "./prisma-booking.repository";
 import {
   BookingRideTransition,
-  CreateRideRequest,
+  CreateRideForRiderRequest,
 } from "./booking.types";
 
 const requestedAt = "2026-07-10T10:00:00.000Z";
 
-const baseRequest: CreateRideRequest = {
+const baseRequest: CreateRideForRiderRequest = {
   cityId: "city_karachi",
   riderId: "rider_123",
   categoryCode: "standard_taxi",
