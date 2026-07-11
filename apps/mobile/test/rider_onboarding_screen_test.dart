@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tami_mobile/src/app/tami_mobile_app.dart';
 import 'package:tami_mobile/src/auth/rider_identity_client.dart';
+import 'package:tami_mobile/src/auth/rider_onboarding_screen.dart';
 import 'package:tami_mobile/src/auth/rider_session.dart';
+import 'package:tami_mobile/src/ui/tami_theme.dart';
 
 void main() {
   testWidgets('takes a rider from phone verification to the rider home', (
@@ -16,7 +18,12 @@ void main() {
     );
 
     expect(find.text('Verify your phone'), findsOneWidget);
-    await tester.enterText(find.byKey(const Key('phone-input')), '+923001234567');
+    expect(find.byKey(const Key('onboarding-step-glass')), findsOneWidget);
+    expect(find.byKey(const Key('onboarding-route-ribbon')), findsOneWidget);
+    await tester.enterText(
+      find.byKey(const Key('phone-input')),
+      '+923001234567',
+    );
     await tester.tap(find.text('Send code'));
     await tester.pumpAndSettle();
 
@@ -31,6 +38,34 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Where to?'), findsOneWidget);
+  });
+
+  testWidgets('keeps onboarding usable at two hundred percent text scale', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildTamiTheme(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(390, 844),
+            textScaler: TextScaler.linear(2),
+          ),
+          child: RiderOnboardingScreen(client: FakeRiderIdentityClient()),
+        ),
+      ),
+    );
+
+    expect(find.text('Send code'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -320));
+    await tester.pump();
+    expect(find.byKey(const Key('phone-input')), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
 

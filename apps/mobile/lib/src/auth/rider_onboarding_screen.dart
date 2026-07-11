@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../features/rider/rider_booking_client.dart';
 import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_shell.dart';
+import '../ui/tami_colors.dart';
+import '../ui/tami_glass.dart';
+import '../ui/tami_route_ribbon.dart';
 import 'rider_identity_client.dart';
 import 'rider_session.dart';
 
@@ -52,7 +55,9 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
   Future<void> _sendCode() async {
     await _run(() async {
       final cities = await widget.client.getActiveCities();
-      final challenge = await widget.client.requestOtp(_phoneController.text.trim());
+      final challenge = await widget.client.requestOtp(
+        _phoneController.text.trim(),
+      );
       setState(() {
         _cities = cities;
         _selectedCityId = cities.firstOrNull?.id;
@@ -144,112 +149,124 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    const riverGreen = Color(0xFF006C5B);
-    const signalYellow = Color(0xFFF2BC3D);
-    const mist = Color(0xFFE4EFEA);
     final stepIndex = _step.index;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF7FAF7),
+      backgroundColor: TamiColors.mist,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'TAMI',
-                style: TextStyle(
-                  color: riverGreen,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 2,
-                ),
-              ),
-              const SizedBox(height: 24),
-              _JourneyRail(activeStep: stepIndex, accent: signalYellow),
-              const SizedBox(height: 28),
-              Expanded(
-                child: ListView(
-                  children: [
-                    Text(
-                      switch (_step) {
-                        _OnboardingStep.phone => 'Verify your phone',
-                        _OnboardingStep.code => 'Enter your code',
-                        _OnboardingStep.profile => 'Complete your profile',
-                      },
-                      style: const TextStyle(
-                        color: Color(0xFF18302B),
-                        fontSize: 30,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      switch (_step) {
-                        _OnboardingStep.phone => 'Use the number you will ride with.',
-                        _OnboardingStep.code => 'Choose your city, then confirm the code.',
-                        _OnboardingStep.profile => 'Add the details riders and support teams will recognize.',
-                      },
-                      style: const TextStyle(color: Color(0xFF55716A), fontSize: 16),
-                    ),
-                    const SizedBox(height: 32),
-                    if (_step == _OnboardingStep.phone)
-                      _PhoneStep(controller: _phoneController)
-                    else if (_step == _OnboardingStep.code)
-                      _CodeStep(
-                        codeController: _codeController,
-                        cities: _cities,
-                        selectedCityId: _selectedCityId,
-                        onCityChanged: (value) => setState(() => _selectedCityId = value),
-                        challenge: _challenge,
-                      )
-                    else
-                      _ProfileStep(
-                        nameController: _nameController,
-                        emailController: _emailController,
-                        imageUrlController: _imageUrlController,
-                      ),
-                    if (_error != null) ...[
-                      const SizedBox(height: 20),
-                      Text(_error!, style: const TextStyle(color: Color(0xFFB42318))),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : switch (_step) {
-                          _OnboardingStep.phone => _sendCode,
-                          _OnboardingStep.code => _verifyCode,
-                          _OnboardingStep.profile => _saveProfile,
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: riverGreen,
-                    foregroundColor: Colors.white,
-                    shape: const RoundedRectangleBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'TAMI',
+                    style: TextStyle(
+                      color: TamiColors.civicGreen,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 2,
                     ),
                   ),
-                  child: Text(
-                    _isLoading
-                        ? 'Please wait'
-                        : switch (_step) {
-                            _OnboardingStep.phone => 'Send code',
-                            _OnboardingStep.code => 'Verify code',
-                            _OnboardingStep.profile => 'Save profile',
+                  const SizedBox(height: 24),
+                  _JourneyRail(activeStep: stepIndex),
+                  const SizedBox(height: 28),
+                  Expanded(
+                    child: ListView(
+                      children: [
+                        Text(
+                          switch (_step) {
+                            _OnboardingStep.phone => 'Verify your phone',
+                            _OnboardingStep.code => 'Enter your code',
+                            _OnboardingStep.profile => 'Complete your profile',
                           },
+                          style: const TextStyle(
+                            color: Color(0xFF18302B),
+                            fontSize: 30,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          switch (_step) {
+                            _OnboardingStep.phone =>
+                              'Use the number you will ride with.',
+                            _OnboardingStep.code =>
+                              'Choose your city, then confirm the code.',
+                            _OnboardingStep.profile =>
+                              'Add the details riders and support teams will recognize.',
+                          },
+                          style: const TextStyle(
+                            color: Color(0xFF55716A),
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        TamiGlass(
+                          key: const Key('onboarding-step-glass'),
+                          semanticLabel: 'Onboarding details',
+                          padding: const EdgeInsets.all(20),
+                          child: switch (_step) {
+                            _OnboardingStep.phone => _PhoneStep(
+                              controller: _phoneController,
+                            ),
+                            _OnboardingStep.code => _CodeStep(
+                              codeController: _codeController,
+                              cities: _cities,
+                              selectedCityId: _selectedCityId,
+                              onCityChanged: (value) =>
+                                  setState(() => _selectedCityId = value),
+                              challenge: _challenge,
+                            ),
+                            _OnboardingStep.profile => _ProfileStep(
+                              nameController: _nameController,
+                              emailController: _emailController,
+                              imageUrlController: _imageUrlController,
+                            ),
+                          },
+                        ),
+                        if (_error != null) ...[
+                          const SizedBox(height: 20),
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Color(0xFFB42318)),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: _isLoading
+                          ? null
+                          : switch (_step) {
+                              _OnboardingStep.phone => _sendCode,
+                              _OnboardingStep.code => _verifyCode,
+                              _OnboardingStep.profile => _saveProfile,
+                            },
+                      child: Text(
+                        _isLoading
+                            ? 'Please wait'
+                            : switch (_step) {
+                                _OnboardingStep.phone => 'Send code',
+                                _OnboardingStep.code => 'Verify code',
+                                _OnboardingStep.profile => 'Save profile',
+                              },
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Container(height: 2, color: const Color(0xFFD2DFDA)),
+                ],
               ),
-              const SizedBox(height: 10),
-              Container(height: 2, color: mist),
-            ],
+            ),
           ),
         ),
       ),
@@ -258,38 +275,37 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
 }
 
 class _JourneyRail extends StatelessWidget {
-  const _JourneyRail({required this.activeStep, required this.accent});
+  const _JourneyRail({required this.activeStep});
 
   final int activeStep;
-  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     const labels = ['Phone', 'Code', 'Profile'];
-    return Row(
-      children: List.generate(labels.length, (index) {
-        final active = index <= activeStep;
-        return Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                height: 4,
-                color: active ? accent : const Color(0xFFD7E4DF),
-              ),
-              const SizedBox(height: 7),
-              Text(
+    return Column(
+      children: [
+        TamiRouteRibbon(
+          key: const Key('onboarding-route-ribbon'),
+          currentStep: activeStep,
+          steps: labels.length,
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: List.generate(labels.length, (index) {
+            final active = index <= activeStep;
+            return Expanded(
+              child: Text(
                 labels[index],
                 style: TextStyle(
-                  color: active ? const Color(0xFF18302B) : const Color(0xFF7B9690),
+                  color: active ? TamiColors.ink : const Color(0xFF7B9690),
                   fontSize: 12,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w500,
                 ),
               ),
-            ],
-          ),
-        );
-      }),
+            );
+          }),
+        ),
+      ],
     );
   }
 }
@@ -308,7 +324,9 @@ class _PhoneStep extends StatelessWidget {
       decoration: const InputDecoration(
         labelText: 'Mobile number',
         hintText: '+92 300 1234567',
-        border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.all(Radius.circular(8)),
+        ),
       ),
     );
   }
@@ -349,7 +367,9 @@ class _CodeStep extends StatelessWidget {
           keyboardType: TextInputType.number,
           decoration: const InputDecoration(
             labelText: 'Six-digit code',
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
         ),
         const SizedBox(height: 20),
@@ -357,11 +377,14 @@ class _CodeStep extends StatelessWidget {
           initialValue: selectedCityId,
           decoration: const InputDecoration(
             labelText: 'Service city',
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
           items: cities
               .map(
-                (city) => DropdownMenuItem(value: city.id, child: Text(city.name)),
+                (city) =>
+                    DropdownMenuItem(value: city.id, child: Text(city.name)),
               )
               .toList(),
           onChanged: onCityChanged,
@@ -392,7 +415,9 @@ class _ProfileStep extends StatelessWidget {
           textCapitalization: TextCapitalization.words,
           decoration: const InputDecoration(
             labelText: 'Name',
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -402,7 +427,9 @@ class _ProfileStep extends StatelessWidget {
           keyboardType: TextInputType.emailAddress,
           decoration: const InputDecoration(
             labelText: 'Email (optional)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
         ),
         const SizedBox(height: 16),
@@ -412,7 +439,9 @@ class _ProfileStep extends StatelessWidget {
           keyboardType: TextInputType.url,
           decoration: const InputDecoration(
             labelText: 'Profile image URL (optional)',
-            border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.all(Radius.circular(8)),
+            ),
           ),
         ),
       ],

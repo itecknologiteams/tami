@@ -95,7 +95,9 @@ class HttpRiderChatClient implements RiderChatClient {
   }
 
   dynamic _decode(http.Response response) {
-    final body = response.body.isEmpty ? <String, dynamic>{} : jsonDecode(response.body);
+    final body = response.body.isEmpty
+        ? <String, dynamic>{}
+        : jsonDecode(response.body);
     if (response.statusCode >= 400) {
       final message = body is Map<String, dynamic>
           ? body['message']?.toString() ?? 'Unable to load chat'

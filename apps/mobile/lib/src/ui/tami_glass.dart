@@ -24,7 +24,8 @@ class TamiGlass extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reducedEffects = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reducedEffects =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final radius = BorderRadius.circular(borderRadius.clamp(0, 8).toDouble());
     final content = ClipRRect(
       borderRadius: radius,
@@ -83,8 +84,8 @@ class TamiGlass extends StatelessWidget {
   };
 
   Color get _borderColor => switch (level) {
-    TamiGlassLevel.navigation || TamiGlassLevel.action =>
-      Colors.white.withValues(alpha: 0.78),
+    TamiGlassLevel.navigation ||
+    TamiGlassLevel.action => Colors.white.withValues(alpha: 0.78),
     TamiGlassLevel.darkStatus => Colors.white.withValues(alpha: 0.24),
   };
 }

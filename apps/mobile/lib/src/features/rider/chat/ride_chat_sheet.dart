@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/tami_colors.dart';
+import '../../../ui/tami_glass.dart';
 import '../rider_chat_client.dart';
 
 class RideChatSheet extends StatefulWidget {
@@ -90,89 +92,108 @@ class _RideChatSheetState extends State<RideChatSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Material(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * 0.72,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-            child: Column(
-              children: [
-                Container(width: 42, height: 4, color: const Color(0xFFD5E2DC)),
-                const SizedBox(height: 18),
-                const Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Chat with driver',
-                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : ListView.separated(
-                          itemCount: _messages.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: 8),
-                          itemBuilder: (context, index) {
-                            final message = _messages[index];
-                            final isRider = message.senderType == 'rider';
-                            return Align(
-                              alignment: isRider
-                                  ? Alignment.centerRight
-                                  : Alignment.centerLeft,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                                color: isRider
-                                    ? const Color(0xFFE4EFEA)
-                                    : const Color(0xFFF2F5F3),
-                                child: Text(message.body),
-                              ),
-                            );
-                          },
-                        ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      _error!,
-                      style: const TextStyle(color: Color(0xFFB42318)),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 8),
-                Row(
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        widthFactor: 1,
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: TamiGlass(
+            key: const Key('rider-chat-glass'),
+            semanticLabel: 'Chat with driver',
+            padding: EdgeInsets.zero,
+            child: SizedBox(
+              height: MediaQuery.sizeOf(context).height * 0.72,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+                child: Column(
                   children: [
-                    Expanded(
-                      child: TextField(
-                        key: const Key('chat-input'),
-                        controller: _messageController,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => _sendMessage(),
-                        decoration: const InputDecoration(
-                          hintText: 'Message driver',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(8)),
-                          ),
+                    Container(
+                      width: 42,
+                      height: 4,
+                      color: const Color(0xFFB8CCC5),
+                    ),
+                    const SizedBox(height: 18),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Chat with driver',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      key: const Key('send-chat'),
-                      tooltip: 'Send message',
-                      onPressed: _isSending ? null : _sendMessage,
-                      icon: const Icon(Icons.send),
+                    const SizedBox(height: 14),
+                    Expanded(
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ListView.separated(
+                              itemCount: _messages.length,
+                              separatorBuilder: (_, _) =>
+                                  const SizedBox(height: 8),
+                              itemBuilder: (context, index) {
+                                final message = _messages[index];
+                                final isRider = message.senderType == 'rider';
+                                return Align(
+                                  alignment: isRider
+                                      ? Alignment.centerRight
+                                      : Alignment.centerLeft,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    color: isRider
+                                        ? TamiColors.mist
+                                        : const Color(0xFFF2F5F3),
+                                    child: Text(message.body),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          _error!,
+                          style: const TextStyle(color: TamiColors.danger),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            key: const Key('chat-input'),
+                            controller: _messageController,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => _sendMessage(),
+                            decoration: const InputDecoration(
+                              hintText: 'Message driver',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(8),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          key: const Key('send-chat'),
+                          tooltip: 'Send message',
+                          onPressed: _isSending ? null : _sendMessage,
+                          icon: const Icon(Icons.send),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
+              ),
             ),
           ),
         ),

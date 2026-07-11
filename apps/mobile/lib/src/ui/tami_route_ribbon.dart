@@ -17,7 +17,8 @@ class TamiRouteRibbon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final reducedMotion = MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final reducedMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Semantics(
       container: true,
       label: 'Ride progress: step ${currentStep + 1} of $steps',

@@ -4,14 +4,34 @@ import 'package:tami_mobile/src/auth/rider_session.dart';
 import 'package:tami_mobile/src/features/rider/rider_booking_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_chat_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
+import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 
 void main() {
+  testWidgets('caps the booking surface on wide preview screens', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1200, 811);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
+
+    expect(
+      tester.getSize(find.byKey(const Key('rider-booking-glass'))).width,
+      lessThanOrEqualTo(520),
+    );
+  });
+
   testWidgets('opens a destination search from the map booking surface', (
     tester,
   ) async {
     await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
 
     expect(find.byKey(const Key('rider-map')), findsOneWidget);
+    expect(find.byKey(const Key('rider-city-glass')), findsOneWidget);
+    expect(find.byKey(const Key('rider-safety-glass')), findsOneWidget);
+    expect(find.byKey(const Key('rider-booking-glass')), findsOneWidget);
     expect(find.text('Where to?'), findsOneWidget);
     expect(find.text('Current location'), findsOneWidget);
 
@@ -19,12 +39,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Choose destination'), findsOneWidget);
+    expect(find.byKey(const Key('destination-search-glass')), findsOneWidget);
     expect(find.byKey(const Key('destination-search')), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Work'), findsOneWidget);
   });
 
-  testWidgets('shows ride choices after a destination is selected', (tester) async {
+  testWidgets('shows ride choices after a destination is selected', (
+    tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
 
     await tester.tap(find.text('Where to?'));
@@ -38,12 +61,15 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Choose a ride'), findsOneWidget);
+    expect(find.byKey(const Key('ride-options-glass')), findsOneWidget);
     expect(find.text('Standard Taxi'), findsOneWidget);
     expect(find.text('Cash'), findsOneWidget);
     expect(find.text('Confirm ride'), findsOneWidget);
   });
 
-  testWidgets('creates a requested ride when the rider confirms', (tester) async {
+  testWidgets('creates a requested ride when the rider confirms', (
+    tester,
+  ) async {
     final bookingClient = _RecordingBookingClient();
     await tester.pumpWidget(
       MaterialApp(
@@ -66,7 +92,10 @@ void main() {
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('destination-search')), 'Mazar');
+    await tester.enterText(
+      find.byKey(const Key('destination-search')),
+      'Mazar',
+    );
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -76,11 +105,16 @@ void main() {
 
     expect(bookingClient.accessToken, 'rider-session-token');
     expect(bookingClient.request?.categoryCode, 'standard_taxi');
-    expect(bookingClient.request?.destination.address, 'Mazar-e-Quaid, Karachi');
+    expect(
+      bookingClient.request?.destination.address,
+      'Mazar-e-Quaid, Karachi',
+    );
     expect(find.text('Finding your driver'), findsOneWidget);
   });
 
-  testWidgets('cancels a requested ride from the active ride panel', (tester) async {
+  testWidgets('cancels a requested ride from the active ride panel', (
+    tester,
+  ) async {
     final bookingClient = _RecordingBookingClient();
     await tester.pumpWidget(
       MaterialApp(
@@ -133,6 +167,8 @@ void main() {
     );
 
     expect(find.text('Driver accepted your ride'), findsOneWidget);
+    expect(find.byKey(const Key('active-ride-glass')), findsOneWidget);
+    expect(find.byType(TamiRouteRibbon), findsOneWidget);
     expect(find.text('Chat with driver'), findsOneWidget);
     expect(find.text('Cancel ride'), findsOneWidget);
   });
@@ -172,8 +208,12 @@ void main() {
 
     await tester.tap(find.text('Chat with driver'));
     await tester.pumpAndSettle();
+    expect(find.byKey(const Key('rider-chat-glass')), findsOneWidget);
     expect(find.text('Chat with driver'), findsWidgets);
-    await tester.enterText(find.byKey(const Key('chat-input')), 'I am at gate 2');
+    await tester.enterText(
+      find.byKey(const Key('chat-input')),
+      'I am at gate 2',
+    );
     await tester.tap(find.byKey(const Key('send-chat')));
     await tester.pumpAndSettle();
 
@@ -181,12 +221,17 @@ void main() {
     expect(find.text('I am at gate 2'), findsOneWidget);
   });
 
-  testWidgets('offers a date and time picker for scheduled rides', (tester) async {
+  testWidgets('offers a date and time picker for scheduled rides', (
+    tester,
+  ) async {
     await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('destination-search')), 'Mazar');
+    await tester.enterText(
+      find.byKey(const Key('destination-search')),
+      'Mazar',
+    );
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/tami_colors.dart';
+import '../../../ui/tami_glass.dart';
 import '../rider_booking_client.dart';
 import 'tami_place.dart';
 
@@ -132,146 +134,156 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
   Widget build(BuildContext context) {
     return SafeArea(
       top: false,
-      child: Material(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    color: const Color(0xFFD5E2DC),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Choose a ride',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.destination.name,
-                  style: const TextStyle(color: Color(0xFF55716A)),
-                ),
-                const SizedBox(height: 20),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: RideCategory.values
-                      .map(
-                        (category) => ChoiceChip(
-                          label: Text(_categoryLabel(category)),
-                          selected: _category == category,
-                          onSelected: (_) => setState(() => _category = category),
-                        ),
-                      )
-                      .toList(),
-                ),
-                const SizedBox(height: 20),
-                SegmentedButton<bool>(
-                  segments: const [
-                    ButtonSegment(value: false, label: Text('Now')),
-                    ButtonSegment(value: true, label: Text('Later')),
-                  ],
-                  selected: {_isScheduled},
-                  onSelectionChanged: (value) {
-                    setState(() {
-                      _isScheduled = value.first;
-                      if (_isScheduled && _scheduledPickupAt == null) {
-                        _scheduledPickupAt = DateTime.now().add(
-                          const Duration(hours: 1),
-                        );
-                      }
-                    });
-                  },
-                ),
-                if (_isScheduled) ...[
-                  const SizedBox(height: 12),
-                  ListTile(
-                    key: const Key('schedule-picker'),
-                    onTap: _pickScheduledPickup,
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.schedule),
-                    title: const Text('Schedule pickup'),
-                    subtitle: Text(_scheduledPickupLabel()),
-                    trailing: const Icon(Icons.chevron_right),
-                  ),
-                ],
-                const SizedBox(height: 20),
-                DropdownButtonFormField<RiderPaymentMethod>(
-                  initialValue: _paymentMethod,
-                  decoration: const InputDecoration(
-                    labelText: 'Payment method',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(8)),
+      child: Align(
+        alignment: Alignment.bottomCenter,
+        widthFactor: 1,
+        heightFactor: 1,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: TamiGlass(
+            key: const Key('ride-options-glass'),
+            semanticLabel: 'Choose a ride',
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 42,
+                      height: 4,
+                      color: const Color(0xFFB8CCC5),
                     ),
                   ),
-                  items: RiderPaymentMethod.values
-                      .map(
-                        (method) => DropdownMenuItem(
-                          value: method,
-                          child: Text(_paymentLabel(method)),
-                        ),
-                      )
-                      .toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _paymentMethod = value);
-                    }
-                  },
-                ),
-                const SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  color: const Color(0xFFE4EFEA),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.receipt_long_outlined),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Estimated fare'),
-                            Text(
-                              'PKR $_estimate',
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Text('Government fare policy'),
-                    ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Choose a ride',
+                    style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
                   ),
-                ),
-                const SizedBox(height: 20),
-                if (_error != null) ...[
+                  const SizedBox(height: 4),
                   Text(
-                    _error!,
-                    style: const TextStyle(color: Color(0xFFB42318)),
+                    widget.destination.name,
+                    style: const TextStyle(color: Color(0xFF55716A)),
                   ),
-                  const SizedBox(height: 12),
-                ],
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _confirm,
-                    child: Text(
-                      _isSubmitting ? 'Requesting ride' : 'Confirm ride',
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: RideCategory.values
+                        .map(
+                          (category) => ChoiceChip(
+                            label: Text(_categoryLabel(category)),
+                            selected: _category == category,
+                            onSelected: (_) =>
+                                setState(() => _category = category),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(value: false, label: Text('Now')),
+                      ButtonSegment(value: true, label: Text('Later')),
+                    ],
+                    selected: {_isScheduled},
+                    onSelectionChanged: (value) {
+                      setState(() {
+                        _isScheduled = value.first;
+                        if (_isScheduled && _scheduledPickupAt == null) {
+                          _scheduledPickupAt = DateTime.now().add(
+                            const Duration(hours: 1),
+                          );
+                        }
+                      });
+                    },
+                  ),
+                  if (_isScheduled) ...[
+                    const SizedBox(height: 12),
+                    ListTile(
+                      key: const Key('schedule-picker'),
+                      onTap: _pickScheduledPickup,
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.schedule),
+                      title: const Text('Schedule pickup'),
+                      subtitle: Text(_scheduledPickupLabel()),
+                      trailing: const Icon(Icons.chevron_right),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  DropdownButtonFormField<RiderPaymentMethod>(
+                    initialValue: _paymentMethod,
+                    decoration: const InputDecoration(
+                      labelText: 'Payment method',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
+                      ),
+                    ),
+                    items: RiderPaymentMethod.values
+                        .map(
+                          (method) => DropdownMenuItem(
+                            value: method,
+                            child: Text(_paymentLabel(method)),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() => _paymentMethod = value);
+                      }
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: TamiColors.mist.withValues(alpha: 0.82),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.receipt_long_outlined),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('Estimated fare'),
+                              Text(
+                                'PKR $_estimate',
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Text('Government fare policy'),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  if (_error != null) ...[
+                    Text(
+                      _error!,
+                      style: const TextStyle(color: Color(0xFFB42318)),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: ElevatedButton(
+                      onPressed: _isSubmitting ? null : _confirm,
+                      child: Text(
+                        _isSubmitting ? 'Requesting ride' : 'Confirm ride',
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

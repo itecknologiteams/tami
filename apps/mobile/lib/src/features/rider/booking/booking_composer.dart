@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../ui/tami_colors.dart';
+import '../../../ui/tami_glass.dart';
 import 'tami_place.dart';
 
 class BookingComposer extends StatelessWidget {
@@ -14,49 +16,47 @@ class BookingComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      elevation: 12,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD5E2DC),
-                borderRadius: BorderRadius.circular(2),
+    return TamiGlass(
+      key: const Key('rider-booking-glass'),
+      level: TamiGlassLevel.action,
+      semanticLabel: 'Book a ride',
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 42,
+            height: 4,
+            decoration: BoxDecoration(
+              color: const Color(0xFFB8CCC5),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const _LocationRow(
+            icon: Icons.my_location,
+            title: 'Current location',
+            subtitle: 'Use your pickup point',
+            accent: TamiColors.routeCyan,
+          ),
+          const Divider(height: 24),
+          InkWell(
+            key: const Key('destination-trigger'),
+            onTap: onDestinationTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _LocationRow(
+                icon: Icons.search,
+                title: destination?.name ?? 'Where to?',
+                subtitle:
+                    destination?.address ??
+                    'Search a place or choose a saved address',
+                accent: TamiColors.signalYellow,
               ),
             ),
-            const SizedBox(height: 16),
-            const _LocationRow(
-              icon: Icons.my_location,
-              title: 'Current location',
-              subtitle: 'Use your pickup point',
-              accent: Color(0xFF006C5B),
-            ),
-            const Divider(height: 24),
-            InkWell(
-              key: const Key('destination-trigger'),
-              onTap: onDestinationTap,
-              borderRadius: BorderRadius.circular(8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: _LocationRow(
-                  icon: Icons.search,
-                  title: destination?.name ?? 'Where to?',
-                  subtitle:
-                      destination?.address ??
-                      'Search a place or choose a saved address',
-                  accent: const Color(0xFFF2BC3D),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

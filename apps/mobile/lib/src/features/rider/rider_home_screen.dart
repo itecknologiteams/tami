@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
 import '../../maps/tami_map_surface.dart';
+import '../../ui/tami_colors.dart';
+import '../../ui/tami_glass.dart';
 import 'active_ride/active_ride_panel.dart';
 import 'booking/booking_composer.dart';
 import 'booking/destination_search_sheet.dart';
@@ -66,10 +68,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => RideOptionsSheet(
-        destination: destination,
-        onConfirm: _requestRide,
-      ),
+      builder: (context) =>
+          RideOptionsSheet(destination: destination, onConfirm: _requestRide),
     );
   }
 
@@ -142,14 +142,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         _activeRide = null;
         _destination = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Ride cancelled')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Ride cancelled')));
     } on RiderBookingException catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(error.message)));
       }
     }
   }
@@ -193,9 +193,11 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     children: [
                       const _CityPill(),
                       const Spacer(),
-                      Material(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
+                      TamiGlass(
+                        key: const Key('rider-safety-glass'),
+                        level: TamiGlassLevel.navigation,
+                        semanticLabel: 'Safety center',
+                        padding: EdgeInsets.zero,
                         child: IconButton(
                           tooltip: 'Safety center',
                           onPressed: () {},
@@ -205,18 +207,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     ],
                   ),
                   const Spacer(),
-                  if (_activeRide == null)
-                    BookingComposer(
-                      destination: _destination,
-                      onDestinationTap: _openDestinationSearch,
-                    )
-                  else
-                    ActiveRidePanel(
-                      destination: _destination!,
-                      rideState: _activeRide!.state,
-                      onCancel: _confirmCancelRide,
-                      onChat: widget.chatClient == null ? null : _openChat,
-                    ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 520),
+                    child: _activeRide == null
+                        ? BookingComposer(
+                            destination: _destination,
+                            onDestinationTap: _openDestinationSearch,
+                          )
+                        : ActiveRidePanel(
+                            destination: _destination!,
+                            rideState: _activeRide!.state,
+                            onCancel: _confirmCancelRide,
+                            onChat: widget.chatClient == null
+                                ? null
+                                : _openChat,
+                          ),
+                  ),
                 ],
               ),
             ),
@@ -232,15 +238,21 @@ class _CityPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      child: const Padding(
+    return const TamiGlass(
+      key: Key('rider-city-glass'),
+      level: TamiGlassLevel.navigation,
+      semanticLabel: 'Service city Karachi',
+      padding: EdgeInsets.zero,
+      child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.location_city_outlined, size: 18),
+            Icon(
+              Icons.location_city_outlined,
+              size: 18,
+              color: TamiColors.civicGreen,
+            ),
             SizedBox(width: 8),
             Text('Karachi', style: TextStyle(fontWeight: FontWeight.w700)),
             SizedBox(width: 4),

@@ -24,6 +24,7 @@ void main() {
     );
 
     expect(find.text('Where to?'), findsOneWidget);
+    expect(find.byKey(const Key('rider-navigation-glass')), findsOneWidget);
     await tester.tap(find.text('Trips'));
     await tester.pumpAndSettle();
     expect(find.text('Your trips'), findsOneWidget);
