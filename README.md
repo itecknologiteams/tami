@@ -62,6 +62,16 @@ cd apps/mobile
 flutter run --target lib/main_rider.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
 ```
 
+For the browser development preview, build with the same API override and serve the generated files:
+
+```bash
+cd apps/mobile
+flutter build web --target lib/main_rider.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
+python3 -m http.server 4174 --directory build/web
+```
+
+The web preview uses a non-GL static map fallback. Android and iOS use MapLibre through Flutter; provide the approved style endpoint with `TAMI_MAP_STYLE_URL` for native map builds.
+
 The first Prisma schema defines cities, zones, ride categories, riders, drivers, vehicles, rides, ride state transition audit records, and payment records.
 
 For local validation without a running database:

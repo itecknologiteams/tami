@@ -54,4 +54,25 @@ describe("BookingService", () => {
     expect(ride.categoryCode).toBe("scheduled_ride");
     expect(ride.scheduledPickupAt).toBe(scheduledPickupAt);
   });
+
+  it("cancels a rider's requested ride and records the transition", async () => {
+    const repository = new InMemoryBookingRepository();
+    const service = new BookingService(repository);
+    const ride = await service.createRide(baseRequest);
+
+    const cancelled = await service.cancelRide({
+      rideId: ride.id,
+      riderId: "rider_123",
+    });
+
+    expect(cancelled?.state).toBe("cancelled_by_rider");
+    expect(repository.transitions).toContainEqual(
+      expect.objectContaining({
+        rideId: ride.id,
+        fromState: "requested",
+        toState: "cancelled_by_rider",
+        actorType: "rider",
+      }),
+    );
+  });
 });

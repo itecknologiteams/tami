@@ -9,6 +9,10 @@ import { BookingController } from "./bookings/booking.controller";
 import { BookingRepository } from "./bookings/booking.repository";
 import { BookingService } from "./bookings/booking.service";
 import { PrismaBookingRepository } from "./bookings/prisma-booking.repository";
+import { PrismaRideChatRepository } from "./chat/prisma-ride-chat.repository";
+import { RideChatController } from "./chat/ride-chat.controller";
+import { RideChatRepository } from "./chat/ride-chat.repository";
+import { RideChatService } from "./chat/ride-chat.service";
 import { HealthController } from "./health/health.controller";
 import { PlatformConfigController } from "./platform/platform-config.controller";
 import { PlatformConfigService } from "./platform/platform-config.service";
@@ -24,6 +28,7 @@ import { RideTransitionService } from "./rides/ride-transition.service";
     BookingController,
     AuthController,
     RiderProfileController,
+    RideChatController,
   ],
   providers: [
     RideTransitionService,
@@ -38,9 +43,14 @@ import { RideTransitionService } from "./rides/ride-transition.service";
       useClass: PrismaAuthRepository,
     },
     BookingService,
+    RideChatService,
     {
       provide: BookingRepository,
       useClass: PrismaBookingRepository,
+    },
+    {
+      provide: RideChatRepository,
+      useClass: PrismaRideChatRepository,
     },
   ],
 })

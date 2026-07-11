@@ -104,6 +104,8 @@ Current implementation direction:
 - Mobile MapLibre package version: `maplibre@0.3.5`.
 - Do not use the old React Native MapLibre package path for new mobile work.
 - Requested style family: `streets-v2`.
+- Native map style URL: configure `TAMI_MAP_STYLE_URL` with the approved public `streets-v2` endpoint before a production mobile build. The development default is MapLibre's demo style only and is not a production map-provider decision.
+- Browser preview: a non-GL Flutter-painted fallback is intentionally used for development previews; it does not load `maplibre-gl-js`.
 - Admin command center: prefer a non-GL/static or server-rendered map approach for the first admin dashboard if possible; if rich live vector maps are required later, revisit this decision explicitly before introducing `maplibre-gl-js`.
 - Map styles: use public/open map styles approved for Sindh operations.
 - Location storage: store coordinates with PostgreSQL/PostGIS.

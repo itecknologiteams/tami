@@ -1,4 +1,11 @@
-import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  NotFoundException,
+  Param,
+  Post,
+  UseGuards,
+} from "@nestjs/common";
 import {
   CurrentRider,
   RiderAuthGuard,
@@ -22,5 +29,21 @@ export class BookingController {
       cityId: rider.cityId,
       riderId: rider.id,
     });
+  }
+
+  @Post("rides/:rideId/cancel")
+  @UseGuards(RiderAuthGuard)
+  async cancelRide(
+    @CurrentRider() rider: AuthenticatedRider,
+    @Param("rideId") rideId: string,
+  ): Promise<BookingRide> {
+    const ride = await this.bookingService.cancelRide({
+      rideId,
+      riderId: rider.id,
+    });
+    if (ride == null) {
+      throw new NotFoundException("Ride not found or cannot be cancelled");
+    }
+    return ride;
   }
 }

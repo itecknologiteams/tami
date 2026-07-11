@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { assertRideStateTransition } from "@tami/shared";
 import { BookingRepository } from "./booking.repository";
 import { BookingRide, CreateRideForRiderRequest } from "./booking.types";
 
@@ -12,5 +13,36 @@ export class BookingService {
       request,
       requestedAt,
     );
+  }
+
+  async cancelRide({
+    rideId,
+    riderId,
+  }: {
+    rideId: string;
+    riderId: string;
+  }): Promise<BookingRide | null> {
+    const ride = await this.bookingRepository.findRideForRider(rideId, riderId);
+    if (ride == null) {
+      return null;
+    }
+
+    const occurredAt = new Date().toISOString();
+    const transition = assertRideStateTransition({
+      rideId,
+      from: ride.state,
+      to: "cancelled_by_rider",
+      actorType: "rider",
+      actorId: riderId,
+      occurredAt,
+      source: "rider_app",
+    });
+    return this.bookingRepository.changeRideStateForRider({
+      rideId,
+      riderId,
+      fromState: transition.from,
+      toState: transition.to,
+      occurredAt,
+    });
   }
 }

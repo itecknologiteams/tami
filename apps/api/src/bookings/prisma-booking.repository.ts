@@ -5,6 +5,7 @@ import {
   BookingRide,
   BookingRideTransition,
   CreateRideForRiderRequest,
+  RiderRideStateChange,
 } from "./booking.types";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -107,5 +108,51 @@ export class PrismaBookingRepository extends BookingRepository {
       actorId: recordedTransition.actorId,
       occurredAt: recordedTransition.occurredAt.toISOString(),
     };
+  }
+
+  async findRideForRider(
+    rideId: string,
+    riderId: string,
+  ): Promise<BookingRide | null> {
+    const ride = await this.prisma.ride.findFirst({
+      where: { id: rideId, riderId },
+      include: { category: true },
+    });
+    return ride == null ? null : toBookingRide(ride);
+  }
+
+  async changeRideStateForRider(
+    change: RiderRideStateChange,
+  ): Promise<BookingRide | null> {
+    return this.prisma.$transaction(async (transaction) => {
+      const existingRide = await transaction.ride.findFirst({
+        where: {
+          id: change.rideId,
+          riderId: change.riderId,
+          state: change.fromState,
+        },
+      });
+      if (existingRide == null) {
+        return null;
+      }
+
+      const ride = await transaction.ride.update({
+        where: { id: existingRide.id },
+        data: { state: change.toState },
+        include: { category: true },
+      });
+      await transaction.rideStateTransition.create({
+        data: {
+          rideId: change.rideId,
+          fromState: change.fromState,
+          toState: change.toState,
+          actorType: "rider",
+          actorId: change.riderId,
+          source: "rider_app",
+          occurredAt: new Date(change.occurredAt),
+        },
+      });
+      return toBookingRide(ride);
+    });
   }
 }

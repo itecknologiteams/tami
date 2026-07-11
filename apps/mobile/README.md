@@ -1,17 +1,31 @@
-# tami_mobile
+# Tami Mobile
 
-A new Flutter project.
+Flutter application for the rider app on Android and iOS, and the Android driver infotainment app.
 
-## Getting Started
+## Entry Points
 
-This project is a starting point for a Flutter application.
+```bash
+flutter run --target lib/main_rider.dart
+flutter run --target lib/main_driver.dart
+```
 
-A few resources to get you started if this is your first Flutter project:
+## Rider Browser Preview
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+The browser target is a development preview. It deliberately uses a painted static map fallback so it does not introduce `maplibre-gl-js`; Android and iOS use the MapLibre Flutter package.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Start the API and then build the rider preview with a browser-reachable API host:
+
+```bash
+flutter build web --target lib/main_rider.dart \
+  --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
+python3 -m http.server 4174 --directory build/web
+```
+
+Use `TAMI_MAP_STYLE_URL` to provide the approved public `streets-v2` style endpoint for native mobile builds.
+
+## Checks
+
+```bash
+flutter test
+flutter analyze
+```

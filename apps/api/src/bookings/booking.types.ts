@@ -47,3 +47,11 @@ export type BookingRideTransition = {
   actorId: string;
   occurredAt: string;
 };
+
+export type RiderRideStateChange = {
+  rideId: string;
+  riderId: string;
+  fromState: RideState;
+  toState: RideState;
+  occurredAt: string;
+};

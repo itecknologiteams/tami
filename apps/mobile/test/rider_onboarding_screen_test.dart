@@ -30,7 +30,7 @@ void main() {
     await tester.tap(find.text('Save profile'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Book a Tami ride'), findsOneWidget);
+    expect(find.text('Where to?'), findsOneWidget);
   });
 }
 

@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
 
-import '../features/rider/rider_home_screen.dart';
+import '../features/rider/rider_booking_client.dart';
+import '../features/rider/rider_chat_client.dart';
+import '../features/rider/rider_shell.dart';
 import 'rider_identity_client.dart';
 import 'rider_session.dart';
 
 class RiderOnboardingScreen extends StatefulWidget {
-  const RiderOnboardingScreen({required this.client, super.key});
+  const RiderOnboardingScreen({
+    required this.client,
+    this.bookingClient,
+    this.chatClient,
+    super.key,
+  });
 
   final RiderIdentityClient client;
+  final RiderBookingClient? bookingClient;
+  final RiderChatClient? chatClient;
 
   @override
   State<RiderOnboardingScreen> createState() => _RiderOnboardingScreenState();
@@ -95,7 +104,13 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
         return;
       }
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(builder: (_) => const RiderHomeScreen()),
+        MaterialPageRoute<void>(
+          builder: (_) => RiderShell(
+            session: session,
+            bookingClient: widget.bookingClient,
+            chatClient: widget.chatClient,
+          ),
+        ),
       );
     });
   }

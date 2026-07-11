@@ -54,6 +54,13 @@ enum PaymentStatus {
   disputed
 }
 
+enum ChatSenderType {
+  rider
+  driver
+  admin
+  system
+}
+
 model City {
   id        String   @id @default(cuid())
   name      String
@@ -184,6 +191,21 @@ model Ride {
   category    RideCategory          @relation(fields: [categoryId], references: [id])
   transitions RideStateTransition[]
   payments    PaymentRecord[]
+  chatMessages ChatMessage[]
+}
+
+model ChatMessage {
+  id         String         @id @default(cuid())
+  rideId     String
+  senderType ChatSenderType
+  senderId   String
+  body       String
+  sentAt     DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  ride Ride @relation(fields: [rideId], references: [id], onDelete: Cascade)
+
+  @@index([rideId, sentAt])
 }
 
 model RideStateTransition {
