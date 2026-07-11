@@ -5,6 +5,7 @@ import '../auth/rider_onboarding_screen.dart';
 import '../features/driver/driver_home_screen.dart';
 import '../features/rider/rider_booking_client.dart';
 import '../features/rider/rider_chat_client.dart';
+import '../ui/tami_theme.dart';
 
 enum TamiAppMode { rider, driver }
 
@@ -27,10 +28,7 @@ class TamiMobileApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: mode == TamiAppMode.rider ? 'Tami Rider' : 'Tami Driver',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF007A5E)),
-        useMaterial3: true,
-      ),
+      theme: buildTamiTheme(),
       home: switch (mode) {
         TamiAppMode.rider => RiderOnboardingScreen(
           client:
