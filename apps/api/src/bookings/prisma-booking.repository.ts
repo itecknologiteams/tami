@@ -3,9 +3,11 @@ import { Prisma } from "@prisma/client";
 import { BookingRepository } from "./booking.repository";
 import {
   BookingRide,
+  BookingRidePage,
   BookingRideTransition,
   CreateRideForRiderRequest,
   RiderRideStateChange,
+  terminalRideStates,
 } from "./booking.types";
 import { PrismaService } from "../prisma/prisma.service";
 
@@ -119,6 +121,59 @@ export class PrismaBookingRepository extends BookingRepository {
       include: { category: true },
     });
     return ride == null ? null : toBookingRide(ride);
+  }
+
+  async findCurrentRideForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide | null> {
+    const ride = await this.prisma.ride.findFirst({
+      where: {
+        riderId,
+        state: {notIn: [...terminalRideStates]},
+        OR: [{scheduledPickupAt: null}, {scheduledPickupAt: {lte: now}}],
+      },
+      orderBy: [{requestedAt: "desc"}, {id: "desc"}],
+      include: {category: true},
+    });
+    return ride == null ? null : toBookingRide(ride);
+  }
+
+  async findUpcomingRidesForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide[]> {
+    const rides = await this.prisma.ride.findMany({
+      where: {
+        riderId,
+        state: {notIn: [...terminalRideStates]},
+        scheduledPickupAt: {gt: now},
+      },
+      orderBy: [{scheduledPickupAt: "asc"}, {id: "asc"}],
+      include: {category: true},
+    });
+    return rides.map(toBookingRide);
+  }
+
+  async findRideHistoryForRider(
+    riderId: string,
+    options: { cursor?: string; limit: number },
+  ): Promise<BookingRidePage> {
+    const rides = await this.prisma.ride.findMany({
+      where: {riderId, state: {in: [...terminalRideStates]}},
+      orderBy: [{requestedAt: "desc"}, {id: "desc"}],
+      take: options.limit + 1,
+      ...(options.cursor == null
+        ? {}
+        : {cursor: {id: options.cursor}, skip: 1}),
+      include: {category: true},
+    });
+    const hasMore = rides.length > options.limit;
+    const items = rides.slice(0, options.limit).map(toBookingRide);
+    return {
+      items,
+      nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
+    };
   }
 
   async changeRideStateForRider(

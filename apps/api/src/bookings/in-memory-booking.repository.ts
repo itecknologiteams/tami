@@ -1,9 +1,11 @@
 import { BookingRepository } from "./booking.repository";
 import {
   BookingRide,
+  BookingRidePage,
   BookingRideTransition,
   CreateRideForRiderRequest,
   RiderRideStateChange,
+  terminalRideStates,
 } from "./booking.types";
 
 export class InMemoryBookingRepository extends BookingRepository {
@@ -60,6 +62,64 @@ export class InMemoryBookingRepository extends BookingRepository {
       this.rides.find((ride) => ride.id === rideId && ride.riderId === riderId) ??
       null
     );
+  }
+
+  async findCurrentRideForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide | null> {
+    return (
+      this.rides
+        .filter(
+          (ride) =>
+            ride.riderId === riderId &&
+            !terminalRideStates.includes(ride.state) &&
+            (ride.scheduledPickupAt == null ||
+              new Date(ride.scheduledPickupAt) <= now),
+        )
+        .sort((left, right) => right.requestedAt.localeCompare(left.requestedAt))[0] ??
+      null
+    );
+  }
+
+  async findUpcomingRidesForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide[]> {
+    return this.rides
+      .filter(
+        (ride) =>
+          ride.riderId === riderId &&
+          !terminalRideStates.includes(ride.state) &&
+          ride.scheduledPickupAt != null &&
+          new Date(ride.scheduledPickupAt) > now,
+      )
+      .sort((left, right) =>
+        left.scheduledPickupAt!.localeCompare(right.scheduledPickupAt!),
+      );
+  }
+
+  async findRideHistoryForRider(
+    riderId: string,
+    options: { cursor?: string; limit: number },
+  ): Promise<BookingRidePage> {
+    const rides = this.rides
+      .filter(
+        (ride) =>
+          ride.riderId === riderId && terminalRideStates.includes(ride.state),
+      )
+      .sort((left, right) => right.requestedAt.localeCompare(left.requestedAt));
+    const cursorIndex = options.cursor
+      ? rides.findIndex((ride) => ride.id === options.cursor)
+      : -1;
+    const start = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+    const page = rides.slice(start, start + options.limit + 1);
+    const hasMore = page.length > options.limit;
+    const items = page.slice(0, options.limit);
+    return {
+      items,
+      nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
+    };
   }
 
   async changeRideStateForRider(

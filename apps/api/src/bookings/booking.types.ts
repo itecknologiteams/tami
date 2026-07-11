@@ -38,6 +38,20 @@ export type BookingRide = {
   requestedAt: string;
 };
 
+export type BookingRidePage = {
+  items: BookingRide[];
+  nextCursor: string | null;
+};
+
+export const terminalRideStates: readonly RideState[] = [
+  "completed",
+  "cancelled_by_rider",
+  "cancelled_by_driver",
+  "cancelled_by_admin",
+  "no_show",
+  "disputed",
+];
+
 export type BookingRideTransition = {
   id: string;
   rideId: string;

@@ -4,9 +4,43 @@ import 'package:tami_mobile/src/auth/rider_session.dart';
 import 'package:tami_mobile/src/features/rider/rider_booking_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_chat_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
+import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 
 void main() {
+  testWidgets('restores the current ride from the server', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          rideQueryClient: _FakeRideQueryClient(
+            current: const RiderRide(
+              id: 'ride_current',
+              state: 'accepted',
+              categoryCode: 'standard_taxi',
+              pickup: RiderRideLocation(
+                latitude: 24.86,
+                longitude: 67.01,
+                address: 'Pickup',
+              ),
+              destination: RiderRideLocation(
+                latitude: 24.88,
+                longitude: 67.05,
+                address: 'Airport, Karachi',
+              ),
+              scheduledPickupAt: null,
+              requestedAt: '2026-07-11T09:00:00.000Z',
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Driver accepted your ride'), findsOneWidget);
+    expect(find.text('Ride requested to Airport'), findsOneWidget);
+  });
   testWidgets('caps the booking surface on wide preview screens', (
     tester,
   ) async {
@@ -242,6 +276,18 @@ void main() {
   });
 }
 
+const _session = RiderSession(
+  accessToken: 'rider-session-token',
+  rider: RiderProfile(
+    id: 'rider_123',
+    phone: '+923001234567',
+    cityId: 'city_karachi',
+    name: 'Aamir',
+    email: null,
+    imageUrl: null,
+  ),
+);
+
 Future<void> _requestMazarRide(WidgetTester tester) async {
   await tester.tap(find.text('Where to?'));
   await tester.pumpAndSettle();
@@ -312,4 +358,32 @@ class _RecordingChatClient implements RiderChatClient {
       sentAt: DateTime.utc(2026, 7, 10, 12),
     );
   }
+}
+
+class _FakeRideQueryClient implements RiderRideQueryClient {
+  _FakeRideQueryClient({this.current});
+
+  final RiderRide? current;
+
+  @override
+  Future<RiderRide?> getCurrentRide({required String accessToken}) async =>
+      current;
+
+  @override
+  Future<RiderRide> getRide({
+    required String accessToken,
+    required String rideId,
+  }) async => current!;
+
+  @override
+  Future<RiderRidePage> getRideHistory({
+    required String accessToken,
+    String? cursor,
+    int limit = 20,
+  }) async => const RiderRidePage(items: [], nextCursor: null);
+
+  @override
+  Future<List<RiderRide>> getUpcomingRides({
+    required String accessToken,
+  }) async => const [];
 }

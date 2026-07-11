@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../features/rider/rider_booking_client.dart';
 import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_shell.dart';
+import '../features/rider/rider_ride_query_client.dart';
 import '../ui/tami_colors.dart';
 import '../ui/tami_glass.dart';
 import '../ui/tami_route_ribbon.dart';
@@ -14,12 +15,14 @@ class RiderOnboardingScreen extends StatefulWidget {
     required this.client,
     this.bookingClient,
     this.chatClient,
+    this.rideQueryClient,
     super.key,
   });
 
   final RiderIdentityClient client;
   final RiderBookingClient? bookingClient;
   final RiderChatClient? chatClient;
+  final RiderRideQueryClient? rideQueryClient;
 
   @override
   State<RiderOnboardingScreen> createState() => _RiderOnboardingScreenState();
@@ -114,6 +117,7 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
             session: session,
             bookingClient: widget.bookingClient,
             chatClient: widget.chatClient,
+            rideQueryClient: widget.rideQueryClient,
           ),
         ),
       );

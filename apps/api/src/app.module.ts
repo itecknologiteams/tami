@@ -20,6 +20,8 @@ import { PrismaService } from "./prisma/prisma.service";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
 import { RideTransitionService } from "./rides/ride-transition.service";
+import { RiderRideQueryController } from "./rides/rider-ride-query.controller";
+import { RiderRideQueryService } from "./rides/rider-ride-query.service";
 
 @Module({
   controllers: [
@@ -29,9 +31,11 @@ import { RideTransitionService } from "./rides/ride-transition.service";
     AuthController,
     RiderProfileController,
     RideChatController,
+    RiderRideQueryController,
   ],
   providers: [
     RideTransitionService,
+    RiderRideQueryService,
     PlatformConfigService,
     PrismaService,
     DevelopmentOtpStore,

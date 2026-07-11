@@ -12,6 +12,7 @@ import 'booking/tami_place.dart';
 import 'chat/ride_chat_sheet.dart';
 import 'rider_booking_client.dart';
 import 'rider_chat_client.dart';
+import 'rider_ride_query_client.dart';
 
 export 'booking/tami_place.dart';
 
@@ -21,6 +22,7 @@ class RiderHomeScreen extends StatefulWidget {
     this.session,
     this.bookingClient,
     this.chatClient,
+    this.rideQueryClient,
     this.initialRide,
     this.initialDestination,
     super.key,
@@ -30,6 +32,7 @@ class RiderHomeScreen extends StatefulWidget {
   final RiderSession? session;
   final RiderBookingClient? bookingClient;
   final RiderChatClient? chatClient;
+  final RiderRideQueryClient? rideQueryClient;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
 
@@ -46,6 +49,41 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     super.initState();
     _destination = widget.initialDestination;
     _activeRide = widget.initialRide;
+    if (_activeRide == null) {
+      _restoreCurrentRide();
+    }
+  }
+
+  Future<void> _restoreCurrentRide() async {
+    final client = widget.rideQueryClient;
+    final session = widget.session;
+    if (client == null || session == null) {
+      return;
+    }
+    try {
+      final ride = await client.getCurrentRide(
+        accessToken: session.accessToken,
+      );
+      if (!mounted || ride == null) {
+        return;
+      }
+      setState(() {
+        _activeRide = RiderBookingRide(
+          id: ride.id,
+          state: ride.state,
+          categoryCode: ride.categoryCode,
+          scheduledPickupAt: ride.scheduledPickupAt,
+        );
+        _destination = TamiPlace(
+          name: ride.destination.address.split(',').first,
+          address: ride.destination.address,
+          latitude: ride.destination.latitude,
+          longitude: ride.destination.longitude,
+        );
+      });
+    } on RiderRideQueryException {
+      // The booking surface remains available; reconnect recovery follows later.
+    }
   }
 
   Future<void> _openDestinationSearch() async {

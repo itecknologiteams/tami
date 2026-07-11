@@ -6,6 +6,7 @@ import 'account/rider_account_screen.dart';
 import 'rider_booking_client.dart';
 import 'rider_chat_client.dart';
 import 'rider_home_screen.dart';
+import 'rider_ride_query_client.dart';
 import 'trips/rider_trips_screen.dart';
 
 class RiderShell extends StatefulWidget {
@@ -13,12 +14,14 @@ class RiderShell extends StatefulWidget {
     required this.session,
     this.bookingClient,
     this.chatClient,
+    this.rideQueryClient,
     super.key,
   });
 
   final RiderSession session;
   final RiderBookingClient? bookingClient;
   final RiderChatClient? chatClient;
+  final RiderRideQueryClient? rideQueryClient;
 
   @override
   State<RiderShell> createState() => _RiderShellState();
@@ -34,8 +37,12 @@ class _RiderShellState extends State<RiderShell> {
         session: widget.session,
         bookingClient: widget.bookingClient,
         chatClient: widget.chatClient,
+        rideQueryClient: widget.rideQueryClient,
       ),
-      const RiderTripsScreen(),
+      RiderTripsScreen(
+        session: widget.session,
+        rideQueryClient: widget.rideQueryClient,
+      ),
       RiderAccountScreen(rider: widget.session.rider),
     ];
 

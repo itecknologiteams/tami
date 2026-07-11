@@ -1,5 +1,6 @@
 import {
   BookingRide,
+  BookingRidePage,
   BookingRideTransition,
   CreateRideForRiderRequest,
   RiderRideStateChange,
@@ -19,6 +20,21 @@ export abstract class BookingRepository {
     rideId: string,
     riderId: string,
   ): Promise<BookingRide | null>;
+
+  abstract findCurrentRideForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide | null>;
+
+  abstract findUpcomingRidesForRider(
+    riderId: string,
+    now: Date,
+  ): Promise<BookingRide[]>;
+
+  abstract findRideHistoryForRider(
+    riderId: string,
+    options: { cursor?: string; limit: number },
+  ): Promise<BookingRidePage>;
 
   abstract changeRideStateForRider(
     change: RiderRideStateChange,
