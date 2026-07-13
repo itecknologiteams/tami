@@ -102,14 +102,17 @@ Current implementation direction:
 - Mobile rider app: `maplibre` Flutter package.
 - Android driver app: same `maplibre` Flutter package as the rider app.
 - Mobile MapLibre package version: `maplibre@0.3.5`.
+- Device location package: `geolocator@14.0.3`.
 - Do not use the old React Native MapLibre package path for new mobile work.
 - Requested style family: `streets-v2`.
-- Native map style URL: configure `TAMI_MAP_STYLE_URL` with the approved public `streets-v2` endpoint before a production mobile build. The development default is MapLibre's demo style only and is not a production map-provider decision.
+- Native map style URL: configure `TAMI_MAP_STYLE_URL=https://api.maptiler.com/maps/streets-v2/style.json?key=<restricted-public-key>` before a production mobile build. `streets-v2` is an explicit product compatibility requirement even though MapTiler now documents newer Streets revisions.
 - Browser preview: a non-GL Flutter-painted fallback is intentionally used for development previews; it does not load `maplibre-gl-js`.
 - Admin command center: prefer a non-GL/static or server-rendered map approach for the first admin dashboard if possible; if rich live vector maps are required later, revisit this decision explicitly before introducing `maplibre-gl-js`.
 - Map styles: use public/open map styles approved for Sindh operations.
 - Location storage: store coordinates with PostgreSQL/PostGIS.
-- Route calculation/navigation provider: to be selected separately because MapLibre renders maps but does not by itself provide full routing.
+- Place search and reverse geocoding: MapTiler Search API through the NestJS backend. Keep `TAMI_MAPTILER_API_KEY` server-side and use rider-city bounding boxes, Pakistan country filtering, request timeouts, and bounded result counts.
+- Route calculation: OSRM HTTP route API v1 through a replaceable NestJS `RoutingProvider`. Configure `TAMI_ROUTING_BASE_URL` to an operated or contracted OSRM-compatible service in production; the public OSRM demo endpoint is development-only.
+- Route consistency: the OSRM distance, duration, and GeoJSON geometry returned by one backend route calculation feed both authoritative pricing and the route drawn by Flutter.
 - Driver search and dispatch matching: evaluate Uber H3 when the dispatch module begins. It is not introduced in booking or identity flows.
 
 Note: Flutter is now the mobile standard. Any existing React Native mobile scaffold is transitional and should be replaced by `apps/mobile` before real rider or driver feature work continues.
