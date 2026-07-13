@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
 import '../../ui/tami_glass.dart';
+import '../../location/rider_location_client.dart';
 import 'account/rider_account_screen.dart';
 import 'rider_booking_client.dart';
 import 'rider_chat_client.dart';
@@ -19,6 +20,7 @@ class RiderShell extends StatefulWidget {
     this.rideQueryClient,
     this.savedPlaceClient,
     this.pricingClient,
+    this.locationClient,
     super.key,
   });
 
@@ -28,6 +30,7 @@ class RiderShell extends StatefulWidget {
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
   final RiderPricingClient? pricingClient;
+  final RiderLocationClient? locationClient;
 
   @override
   State<RiderShell> createState() => _RiderShellState();

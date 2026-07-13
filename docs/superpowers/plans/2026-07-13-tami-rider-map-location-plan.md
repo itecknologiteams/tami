@@ -91,7 +91,7 @@
 - [x] **Step 5: Update pricing tests first** to expect OSRM metrics and geometry, then run them to verify RED against the great-circle implementation.
 - [x] **Step 6: Inject `RoutingService` into `PricingService` and calculate fare from route distance/duration** while preserving policy caps, multipliers, and explanation lines.
 - [x] **Step 7: Run pricing, booking, controller, and API suites to verify GREEN**.
-- [ ] **Step 8: Commit** with `git commit -m "feat: route rider fares with osrm"`.
+- [x] **Step 8: Commit** with `git commit -m "feat: route rider fares with osrm"`.
 
 ### Task 4: Flutter Device Location
 
@@ -112,12 +112,12 @@
 - Produces: `RiderLocationResult` states `ready`, `servicesDisabled`, `permissionDenied`, `permissionDeniedForever`, and `failed`.
 - Produces: `RiderLocationClient.locate()` and `openSettings()`.
 
-- [ ] **Step 1: Add `geolocator: ^14.0.3` and write failing adapter tests** using a narrow injected geolocator gateway.
-- [ ] **Step 2: Run the focused Flutter test to verify RED** because the location types do not exist.
-- [ ] **Step 3: Implement the result model and geolocator adapter** mapping service and permission states without a default coordinate.
-- [ ] **Step 4: Add Android coarse/fine location permissions and the iOS when-in-use purpose string**.
-- [ ] **Step 5: Thread the injectable location client from `TamiMobileApp` through onboarding and shell**.
-- [ ] **Step 6: Run focused tests and `flutter analyze` to verify GREEN**.
+- [x] **Step 1: Add `geolocator: ^14.0.3` and write failing adapter tests** using a narrow injected geolocator gateway.
+- [x] **Step 2: Run the focused Flutter test to verify RED** because the location types do not exist.
+- [x] **Step 3: Implement the result model and geolocator adapter** mapping service and permission states without a default coordinate.
+- [x] **Step 4: Add Android coarse/fine location permissions and the iOS when-in-use purpose string**.
+- [x] **Step 5: Thread the injectable location client from `TamiMobileApp` through onboarding and shell**.
+- [x] **Step 6: Run focused tests and `flutter analyze` to verify GREEN**.
 - [ ] **Step 7: Commit** with `git commit -m "feat: add rider device location"`.
 
 ### Task 5: Flutter Place Search Client and Sheet
