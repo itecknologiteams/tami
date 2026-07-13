@@ -136,4 +136,4 @@ cd apps/mobile && flutter build ios --target lib/main_rider.dart --no-codesign
 cd apps/mobile && flutter build apk --target lib/main_driver.dart
 ```
 
-Android builds require `ANDROID_HOME` to point to an installed Android SDK. The rider app targets Android and iOS 13+. The driver app targets Android infotainment devices.
+Android builds require API 36, Build Tools 36.0.0, NDK `28.2.13676358`, and JDK 17. The rider app targets Android and iOS 13+. The driver app targets Android infotainment devices.

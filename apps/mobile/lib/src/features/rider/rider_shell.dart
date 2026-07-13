@@ -5,6 +5,7 @@ import '../../ui/tami_glass.dart';
 import '../../location/rider_location_client.dart';
 import 'account/rider_account_screen.dart';
 import 'rider_booking_client.dart';
+import 'rider_category_client.dart';
 import 'rider_chat_client.dart';
 import 'rider_home_screen.dart';
 import 'rider_ride_query_client.dart';
@@ -17,6 +18,7 @@ class RiderShell extends StatefulWidget {
   const RiderShell({
     required this.session,
     this.bookingClient,
+    this.categoryClient,
     this.chatClient,
     this.rideQueryClient,
     this.savedPlaceClient,
@@ -28,6 +30,7 @@ class RiderShell extends StatefulWidget {
 
   final RiderSession session;
   final RiderBookingClient? bookingClient;
+  final RiderCategoryClient? categoryClient;
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
@@ -48,6 +51,7 @@ class _RiderShellState extends State<RiderShell> {
       RiderHomeScreen(
         session: widget.session,
         bookingClient: widget.bookingClient,
+        categoryClient: widget.categoryClient,
         chatClient: widget.chatClient,
         rideQueryClient: widget.rideQueryClient,
         savedPlaceClient: widget.savedPlaceClient,

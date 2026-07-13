@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tami_mobile/src/auth/rider_session.dart';
 import 'package:tami_mobile/src/features/rider/rider_booking_client.dart';
+import 'package:tami_mobile/src/features/rider/rider_category_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_chat_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
 import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
@@ -265,6 +266,37 @@ void main() {
     expect(find.text('Standard Taxi'), findsOneWidget);
     expect(find.text('Cash'), findsOneWidget);
     expect(find.text('Confirm ride'), findsOneWidget);
+  });
+
+  testWidgets('uses only city categories and scheduling returned by the API', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          categoryClient: const _AirportOnlyCategoryClient(),
+          pricingClient: _PricingClient(),
+          placeSearchClient: _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Where to?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    await tester.tap(find.text('Mazar-e-Quaid'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Airport'), findsOneWidget);
+    expect(find.text('Standard Taxi'), findsNothing);
+    final scheduleControl = tester.widget<SegmentedButton<bool>>(
+      find.byType(SegmentedButton<bool>),
+    );
+    expect(scheduleControl.segments.last.enabled, isFalse);
   });
 
   testWidgets('creates a requested ride when the rider confirms', (
@@ -633,6 +665,24 @@ class _RecordingBookingClient implements RiderBookingClient {
       paymentMethod: 'cash',
     );
   }
+}
+
+class _AirportOnlyCategoryClient implements RiderCategoryClient {
+  const _AirportOnlyCategoryClient();
+
+  @override
+  Future<RiderCategoryCatalog> getCatalog({
+    required String accessToken,
+  }) async => const RiderCategoryCatalog(
+    categories: [
+      RiderAvailableCategory(
+        code: 'airport',
+        name: 'Airport',
+        description: 'Airport pickup and drop-off.',
+      ),
+    ],
+    scheduledRidesEnabled: false,
+  );
 }
 
 class _PricingClient implements RiderPricingClient {

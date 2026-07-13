@@ -209,8 +209,8 @@
 
 - [x] **Step 1: Run API unit and integration suites** including a clean migration/seed against `postgresql://tami:tami@127.0.0.1:5434/tami`.
 - [x] **Step 2: Run API typecheck/build** and confirm no provider secret appears in generated output.
-- [ ] **Step 3: Run Flutter tests, analyze, Android debug build, and web build** with explicit API/map environment values.
-  - Flutter tests, analysis, web build, and iOS simulator build pass. Android remains blocked on this workstation because no Android SDK is installed.
+- [x] **Step 3: Run Flutter tests, analyze, Android debug build, and web build** with explicit API/map environment values.
+  - Flutter tests, analysis, web build, Android debug APK, and iOS simulator build pass.
 - [x] **Step 4: Rebuild and serve the browser preview** and verify OTP, profile, current/manual pickup, live destination search, fare, route drawing, immediate ride, and scheduled ride.
 - [x] **Step 5: Check browser logs and responsive layouts** at mobile and wide viewports.
 - [x] **Step 6: Update the completion checklist and provider setup documentation with verified commands**.

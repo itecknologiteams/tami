@@ -4,7 +4,11 @@ import {
   NotFoundException,
 } from "@nestjs/common";
 import { PricingRepository } from "./pricing.repository";
-import { FareEstimate, FareEstimateRequest } from "./pricing.types";
+import {
+  FareEstimate,
+  FareEstimateRequest,
+  RiderCategoryCatalog,
+} from "./pricing.types";
 import { rideCategoryCodes, RideCategoryCode } from "../bookings/booking.types";
 import { RoutingService } from "../routing/routing.service";
 
@@ -14,6 +18,10 @@ export class PricingService {
     private readonly repository: PricingRepository,
     private readonly routingService: RoutingService,
   ) {}
+
+  getAvailableCategories(cityId: string): Promise<RiderCategoryCatalog> {
+    return this.repository.findAvailableCategories(cityId);
+  }
 
   async estimateFare(request: FareEstimateRequest): Promise<FareEstimate> {
     this.validateCategory(request?.categoryCode);

@@ -24,6 +24,35 @@ const policy: PricingPolicy = {
 };
 
 describe("PricingController", () => {
+  it("returns only categories available for the authenticated rider city", async () => {
+    const controller = new PricingController(
+      new PricingService(
+        new InMemoryPricingRepository([policy], {
+          categories: [
+            {
+              code: "standard_taxi",
+              name: "Standard Taxi",
+              description: "General Tami taxi rides.",
+            },
+          ],
+          scheduledRidesEnabled: false,
+        }),
+        createTestRoutingService(),
+      ),
+    );
+
+    await expect(
+      controller.getAvailableCategories({
+        id: "rider_1",
+        cityId: "city_karachi",
+        phone: "+923001234567",
+      }),
+    ).resolves.toEqual({
+      categories: [expect.objectContaining({code: "standard_taxi"})],
+      scheduledRidesEnabled: false,
+    });
+  });
+
   it("uses the authenticated rider city instead of request ownership fields", async () => {
     const controller = new PricingController(
       new PricingService(

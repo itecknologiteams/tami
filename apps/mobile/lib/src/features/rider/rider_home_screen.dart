@@ -14,6 +14,7 @@ import 'booking/ride_options_sheet.dart';
 import 'booking/tami_place.dart';
 import 'chat/ride_chat_sheet.dart';
 import 'rider_booking_client.dart';
+import 'rider_category_client.dart';
 import 'rider_chat_client.dart';
 import 'rider_ride_query_client.dart';
 import 'rider_saved_place_client.dart';
@@ -27,6 +28,7 @@ class RiderHomeScreen extends StatefulWidget {
     this.mapSurface,
     this.session,
     this.bookingClient,
+    this.categoryClient,
     this.chatClient,
     this.rideQueryClient,
     this.savedPlaceClient,
@@ -42,6 +44,7 @@ class RiderHomeScreen extends StatefulWidget {
   final Widget? mapSurface;
   final RiderSession? session;
   final RiderBookingClient? bookingClient;
+  final RiderCategoryClient? categoryClient;
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
@@ -293,6 +296,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           address: pickup.address,
         ),
         accessToken: widget.session?.accessToken,
+        categoryClient: widget.categoryClient,
         pricingClient: widget.pricingClient,
         onEstimate: _showEstimatedRoute,
         onConfirm: _requestRide,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../features/rider/rider_booking_client.dart';
+import '../features/rider/rider_category_client.dart';
 import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_shell.dart';
 import '../features/rider/rider_ride_query_client.dart';
@@ -18,6 +19,7 @@ class RiderOnboardingScreen extends StatefulWidget {
   const RiderOnboardingScreen({
     required this.client,
     this.bookingClient,
+    this.categoryClient,
     this.chatClient,
     this.rideQueryClient,
     this.savedPlaceClient,
@@ -29,6 +31,7 @@ class RiderOnboardingScreen extends StatefulWidget {
 
   final RiderIdentityClient client;
   final RiderBookingClient? bookingClient;
+  final RiderCategoryClient? categoryClient;
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
@@ -131,6 +134,7 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
               rider: profile,
             ),
             bookingClient: widget.bookingClient,
+            categoryClient: widget.categoryClient,
             chatClient: widget.chatClient,
             rideQueryClient: widget.rideQueryClient,
             savedPlaceClient: widget.savedPlaceClient,

@@ -79,7 +79,7 @@
 - [x] Add location permission and current-location pickup with manual correction and explicit retry/settings states.
 - [x] Replace local destination samples with geocoding/place-search adapter results and saved places.
 - [x] Add rider city context based on profile and selected city; remove hardcoded Karachi copy and coordinates.
-- [ ] Load active categories and availability rules from the API.
+- [x] Load active, city-priced categories and scheduled-ride availability from the authenticated API.
 - [x] Load server fare estimate after pickup, destination, category, and schedule changes; show a policy explanation and payment method.
 - [x] Add stable rider request keys, API validation, and a database uniqueness constraint so sequential and concurrent booking retries return one ride.
 - [ ] Complete immediate and scheduled confirmation summaries, client-side schedule validation, and explicit network failure/retry states.

@@ -6,6 +6,7 @@ function createPrismaFake() {
   return {
     rideCategory: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     farePolicy: {
       findMany: vi.fn(),
@@ -14,6 +15,63 @@ function createPrismaFake() {
 }
 
 describe("PrismaPricingRepository", () => {
+  it("returns only active categories priced by the city policy", async () => {
+    const prisma = createPrismaFake();
+    prisma.rideCategory.findMany.mockResolvedValue([
+      {
+        code: "airport",
+        name: "Airport",
+        description: "Airport rides.",
+      },
+      {
+        code: "standard_taxi",
+        name: "Standard Taxi",
+        description: "General rides.",
+      },
+    ]);
+    prisma.rideCategory.findFirst.mockResolvedValue({code: "scheduled_ride"});
+    const repository = new PrismaPricingRepository(prisma as never);
+    vi.spyOn(repository, "findActivePolicyForCity").mockResolvedValue({
+      id: "policy_1",
+      cityId: "city_karachi",
+      version: 1,
+      name: "Karachi v1",
+      active: true,
+      currency: "PKR",
+      baseFareMinor: 0,
+      perKilometerMinor: 0,
+      perMinuteMinor: 0,
+      bookingFeeMinor: 0,
+      minimumFareMinor: 0,
+      demandMultiplier: 1,
+      maximumMultiplier: 2,
+      maximumFareMinor: null,
+      roadFactor: 1,
+      averageSpeedKph: 24,
+      effectiveFrom: "2026-07-13T00:00:00.000Z",
+      categoryRates: {
+        standard_taxi: 1,
+        airport: 1.2,
+        scheduled_ride: 1.05,
+      },
+    });
+
+    await expect(repository.findAvailableCategories("city_karachi")).resolves.toEqual({
+      categories: [
+        expect.objectContaining({code: "standard_taxi"}),
+        expect.objectContaining({code: "airport"}),
+      ],
+      scheduledRidesEnabled: true,
+    });
+    expect(prisma.rideCategory.findMany).toHaveBeenCalledWith({
+      where: {
+        active: true,
+        code: {in: ["standard_taxi", "airport"]},
+      },
+      select: {code: true, name: true, description: true},
+    });
+  });
+
   it("returns an active ride category code", async () => {
     const prisma = createPrismaFake();
     prisma.rideCategory.findFirst.mockResolvedValue({ code: "standard_taxi" });

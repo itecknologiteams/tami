@@ -5,10 +5,32 @@ import 'package:flutter/material.dart';
 import '../../../ui/tami_colors.dart';
 import '../../../ui/tami_glass.dart';
 import '../rider_booking_client.dart';
+import '../rider_category_client.dart';
 import '../rider_pricing_client.dart';
 import 'tami_place.dart';
 
-enum RideCategory { standard, womenFamily, airport, accessible }
+const _developmentCategories = [
+  RiderAvailableCategory(
+    code: 'standard_taxi',
+    name: 'Standard Taxi',
+    description: 'General Tami taxi rides.',
+  ),
+  RiderAvailableCategory(
+    code: 'women_family_preferred',
+    name: 'Women/Family',
+    description: 'Women and family preference.',
+  ),
+  RiderAvailableCategory(
+    code: 'airport',
+    name: 'Airport',
+    description: 'Airport pickup and drop-off.',
+  ),
+  RiderAvailableCategory(
+    code: 'accessible_special_assistance',
+    name: 'Accessible',
+    description: 'Accessibility and special assistance.',
+  ),
+];
 
 class RideSelection {
   const RideSelection({
@@ -32,6 +54,7 @@ class RideOptionsSheet extends StatefulWidget {
     required this.onConfirm,
     required this.pickup,
     this.accessToken,
+    this.categoryClient,
     this.pricingClient,
     this.onEstimate,
     super.key,
@@ -41,6 +64,7 @@ class RideOptionsSheet extends StatefulWidget {
   final Future<void> Function(RideSelection selection) onConfirm;
   final RiderCoordinates pickup;
   final String? accessToken;
+  final RiderCategoryClient? categoryClient;
   final RiderPricingClient? pricingClient;
   final ValueChanged<RiderFareEstimate>? onEstimate;
 
@@ -49,7 +73,11 @@ class RideOptionsSheet extends StatefulWidget {
 }
 
 class _RideOptionsSheetState extends State<RideOptionsSheet> {
-  RideCategory _category = RideCategory.standard;
+  List<RiderAvailableCategory> _categories = const [];
+  String? _categoryCode;
+  bool _scheduledRidesEnabled = false;
+  bool _isLoadingCategories = false;
+  String? _categoryError;
   RiderPaymentMethod _paymentMethod = RiderPaymentMethod.cash;
   bool _isScheduled = false;
   bool _isSubmitting = false;
@@ -65,13 +93,69 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
   void initState() {
     super.initState();
     _idempotencyKey = _newIdempotencyKey();
-    _loadEstimate();
+    if (widget.categoryClient == null || widget.accessToken == null) {
+      _categories = _developmentCategories;
+      _categoryCode = _categories.first.code;
+      _scheduledRidesEnabled = true;
+      _loadEstimate();
+    } else {
+      _loadCategories();
+    }
+  }
+
+  Future<void> _loadCategories() async {
+    final client = widget.categoryClient;
+    final token = widget.accessToken;
+    if (client == null || token == null) {
+      return;
+    }
+    setState(() {
+      _isLoadingCategories = true;
+      _categoryError = null;
+    });
+    try {
+      final catalog = await client.getCatalog(accessToken: token);
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _categories = catalog.categories;
+        _categoryCode = catalog.categories.firstOrNull?.code;
+        _scheduledRidesEnabled = catalog.scheduledRidesEnabled;
+        if (!_scheduledRidesEnabled) {
+          _isScheduled = false;
+          _scheduledPickupAt = null;
+        }
+        _categoryError = catalog.categories.isEmpty
+            ? 'No ride categories are available in your city.'
+            : null;
+      });
+      if (_categoryCode != null) {
+        _loadEstimate();
+      }
+    } on RiderCategoryException catch (error) {
+      if (mounted) {
+        setState(() {
+          _categories = const [];
+          _categoryCode = null;
+          _categoryError = error.message;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoadingCategories = false);
+      }
+    }
   }
 
   Future<void> _loadEstimate() async {
     final client = widget.pricingClient;
     final token = widget.accessToken;
     if (client == null || token == null) {
+      return;
+    }
+    final categoryCode = _isScheduled ? 'scheduled_ride' : _categoryCode;
+    if (categoryCode == null) {
       return;
     }
     final requestNumber = ++_estimateRequest;
@@ -83,9 +167,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
       final estimate = await client.estimateFare(
         accessToken: token,
         request: RiderFareEstimateRequest(
-          categoryCode: _isScheduled
-              ? 'scheduled_ride'
-              : _categoryCode(_category),
+          categoryCode: categoryCode,
           pickup: widget.pickup,
           destination: RiderCoordinates(
             latitude: widget.destination.latitude,
@@ -122,9 +204,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
       await widget.onConfirm(
         RideSelection(
           destination: widget.destination,
-          categoryCode: _isScheduled
-              ? 'scheduled_ride'
-              : _categoryCode(_category),
+          categoryCode: _isScheduled ? 'scheduled_ride' : _categoryCode!,
           paymentMethod: _paymentMethod,
           scheduledPickupAt: _isScheduled ? _scheduledPickupAt : null,
           idempotencyKey: _idempotencyKey,
@@ -228,30 +308,55 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                     style: const TextStyle(color: Color(0xFF55716A)),
                   ),
                   const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: RideCategory.values
-                        .map(
-                          (category) => ChoiceChip(
-                            label: Text(_categoryLabel(category)),
-                            selected: _category == category,
-                            onSelected: (_) {
-                              setState(() {
-                                _category = category;
-                                _idempotencyKey = _newIdempotencyKey();
-                              });
-                              _loadEstimate();
-                            },
+                  if (_isLoadingCategories)
+                    const Center(child: CircularProgressIndicator())
+                  else
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: _categories
+                          .map(
+                            (category) => ChoiceChip(
+                              label: Text(category.name),
+                              selected: _categoryCode == category.code,
+                              onSelected: (_) {
+                                setState(() {
+                                  _categoryCode = category.code;
+                                  _idempotencyKey = _newIdempotencyKey();
+                                });
+                                _loadEstimate();
+                              },
+                            ),
+                          )
+                          .toList(),
+                    ),
+                  if (_categoryError != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _categoryError!,
+                            style: const TextStyle(color: TamiColors.danger),
                           ),
-                        )
-                        .toList(),
-                  ),
+                        ),
+                        IconButton(
+                          tooltip: 'Retry ride categories',
+                          onPressed: _loadCategories,
+                          icon: const Icon(Icons.refresh),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   SegmentedButton<bool>(
-                    segments: const [
-                      ButtonSegment(value: false, label: Text('Now')),
-                      ButtonSegment(value: true, label: Text('Later')),
+                    segments: [
+                      const ButtonSegment(value: false, label: Text('Now')),
+                      ButtonSegment(
+                        value: true,
+                        enabled: _scheduledRidesEnabled,
+                        label: const Text('Later'),
+                      ),
                     ],
                     selected: {_isScheduled},
                     onSelectionChanged: (value) {
@@ -379,7 +484,11 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                     height: 52,
                     child: ElevatedButton(
                       onPressed:
-                          _isSubmitting || _isEstimating || _estimate == null
+                          _isSubmitting ||
+                              _isLoadingCategories ||
+                              _categoryCode == null ||
+                              _isEstimating ||
+                              _estimate == null
                           ? null
                           : _confirm,
                       child: Text(
@@ -396,30 +505,12 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
     );
   }
 
-  String _categoryLabel(RideCategory category) {
-    return switch (category) {
-      RideCategory.standard => 'Standard Taxi',
-      RideCategory.womenFamily => 'Women/Family',
-      RideCategory.airport => 'Airport',
-      RideCategory.accessible => 'Accessible',
-    };
-  }
-
   String _formatFare(RiderFareEstimate estimate) {
     final amount = estimate.fareMinor / 100;
     final formatted = amount == amount.roundToDouble()
         ? amount.toStringAsFixed(0)
         : amount.toStringAsFixed(2);
     return '${estimate.currency} $formatted';
-  }
-
-  String _categoryCode(RideCategory category) {
-    return switch (category) {
-      RideCategory.standard => 'standard_taxi',
-      RideCategory.womenFamily => 'women_family_preferred',
-      RideCategory.airport => 'airport',
-      RideCategory.accessible => 'accessible_special_assistance',
-    };
   }
 
   String _paymentLabel(RiderPaymentMethod method) {

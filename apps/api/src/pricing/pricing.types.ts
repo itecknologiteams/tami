@@ -1,4 +1,15 @@
 import { Coordinates, RideCategoryCode } from "../bookings/booking.types";
+
+export type AvailableRideCategory = {
+  code: RideCategoryCode;
+  name: string;
+  description: string;
+};
+
+export type RiderCategoryCatalog = {
+  categories: AvailableRideCategory[];
+  scheduledRidesEnabled: boolean;
+};
 import { RouteCoordinate } from "../routing/routing.types";
 
 export type PricingPolicy = {

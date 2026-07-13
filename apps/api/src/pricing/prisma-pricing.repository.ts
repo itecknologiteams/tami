@@ -1,9 +1,12 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
-import { RideCategoryCode } from "../bookings/booking.types";
+import {
+  rideCategoryCodes,
+  RideCategoryCode,
+} from "../bookings/booking.types";
 import { PrismaService } from "../prisma/prisma.service";
 import { PricingRepository } from "./pricing.repository";
-import { PricingPolicy } from "./pricing.types";
+import { PricingPolicy, RiderCategoryCatalog } from "./pricing.types";
 
 type PersistedPolicy = Prisma.FarePolicyGetPayload<{
   include: {categoryRates: true};
@@ -13,6 +16,35 @@ type PersistedPolicy = Prisma.FarePolicyGetPayload<{
 export class PrismaPricingRepository extends PricingRepository {
   constructor(private readonly prisma: PrismaService) {
     super();
+  }
+
+  async findAvailableCategories(cityId: string): Promise<RiderCategoryCatalog> {
+    const policy = await this.findActivePolicyForCity(cityId);
+    if (policy == null) {
+      return {categories: [], scheduledRidesEnabled: false};
+    }
+    const pricedCodes = Object.keys(policy.categoryRates) as RideCategoryCode[];
+    const categories = await this.prisma.rideCategory.findMany({
+      where: {
+        active: true,
+        code: {in: pricedCodes.filter((code) => code !== "scheduled_ride")},
+      },
+      select: {code: true, name: true, description: true},
+    });
+    const categoryByCode = new Map(
+      categories.map((category) => [category.code, category]),
+    );
+    return {
+      categories: rideCategoryCodes
+        .filter((code) => code !== "scheduled_ride")
+        .flatMap((code) => {
+          const category = categoryByCode.get(code);
+          return category == null ? [] : [category];
+        }),
+      scheduledRidesEnabled:
+        policy.categoryRates.scheduled_ride != null &&
+        (await this.findActiveCategory("scheduled_ride")) != null,
+    };
   }
 
   findActiveCategory(categoryCode: RideCategoryCode) {

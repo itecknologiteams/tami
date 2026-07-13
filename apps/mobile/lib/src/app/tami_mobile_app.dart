@@ -4,6 +4,7 @@ import '../auth/rider_identity_client.dart';
 import '../auth/rider_onboarding_screen.dart';
 import '../features/driver/driver_home_screen.dart';
 import '../features/rider/rider_booking_client.dart';
+import '../features/rider/rider_category_client.dart';
 import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_ride_query_client.dart';
 import '../features/rider/rider_saved_place_client.dart';
@@ -20,6 +21,7 @@ class TamiMobileApp extends StatelessWidget {
     required this.mode,
     this.riderIdentityClient,
     this.riderBookingClient,
+    this.riderCategoryClient,
     this.riderChatClient,
     this.riderRideQueryClient,
     this.riderSavedPlaceClient,
@@ -32,6 +34,7 @@ class TamiMobileApp extends StatelessWidget {
   final TamiAppMode mode;
   final RiderIdentityClient? riderIdentityClient;
   final RiderBookingClient? riderBookingClient;
+  final RiderCategoryClient? riderCategoryClient;
   final RiderChatClient? riderChatClient;
   final RiderRideQueryClient? riderRideQueryClient;
   final RiderSavedPlaceClient? riderSavedPlaceClient;
@@ -53,6 +56,9 @@ class TamiMobileApp extends StatelessWidget {
           bookingClient:
               riderBookingClient ??
               HttpRiderBookingClient(baseUrl: _apiBaseUrl),
+          categoryClient:
+              riderCategoryClient ??
+              HttpRiderCategoryClient(baseUrl: _apiBaseUrl),
           chatClient:
               riderChatClient ?? HttpRiderChatClient(baseUrl: _apiBaseUrl),
           rideQueryClient:
