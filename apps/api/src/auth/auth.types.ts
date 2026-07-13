@@ -2,6 +2,7 @@ export type RiderProfile = {
   id: string;
   phone: string;
   cityId: string;
+  cityName: string;
   name: string | null;
   email: string | null;
   imageUrl: string | null;

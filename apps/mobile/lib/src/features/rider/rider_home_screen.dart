@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
 import '../../maps/tami_map_surface.dart';
+import '../../location/rider_location.dart';
+import '../../location/rider_location_client.dart';
 import '../../ui/tami_colors.dart';
 import '../../ui/tami_glass.dart';
 import 'active_ride/active_ride_panel.dart';
@@ -29,6 +31,8 @@ class RiderHomeScreen extends StatefulWidget {
     this.savedPlaceClient,
     this.pricingClient,
     this.placeSearchClient,
+    this.locationClient,
+    this.initialPickup,
     this.initialRide,
     this.initialDestination,
     super.key,
@@ -42,6 +46,8 @@ class RiderHomeScreen extends StatefulWidget {
   final RiderSavedPlaceClient? savedPlaceClient;
   final RiderPricingClient? pricingClient;
   final RiderPlaceSearchClient? placeSearchClient;
+  final RiderLocationClient? locationClient;
+  final TamiPlace? initialPickup;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
 
@@ -51,18 +57,76 @@ class RiderHomeScreen extends StatefulWidget {
 
 class _RiderHomeScreenState extends State<RiderHomeScreen> {
   TamiPlace? _destination;
+  TamiPlace? _pickup;
   RiderBookingRide? _activeRide;
   List<RiderSavedPlace> _savedPlaces = const [];
+  RiderLocationStatus _pickupStatus = RiderLocationStatus.failed;
+  bool _isLocatingPickup = false;
 
   @override
   void initState() {
     super.initState();
     _destination = widget.initialDestination;
+    _pickup = widget.initialPickup;
+    if (_pickup != null) {
+      _pickupStatus = RiderLocationStatus.ready;
+    }
     _activeRide = widget.initialRide;
     if (_activeRide == null) {
-      _restoreCurrentRide();
+      _restoreCurrentRide().whenComplete(() {
+        if (mounted && _activeRide == null && _pickup == null) {
+          _resolveCurrentPickup();
+        }
+      });
+    } else if (_pickup == null) {
+      _resolveCurrentPickup();
     }
     _loadSavedPlaces();
+  }
+
+  Future<void> _resolveCurrentPickup() async {
+    final locationClient = widget.locationClient;
+    final placeSearchClient = widget.placeSearchClient;
+    final accessToken = widget.session?.accessToken;
+    if (locationClient == null || placeSearchClient == null || accessToken == null) {
+      return;
+    }
+    setState(() => _isLocatingPickup = true);
+    final result = await locationClient.locate();
+    if (!mounted) {
+      return;
+    }
+    if (result.status != RiderLocationStatus.ready || result.location == null) {
+      setState(() {
+        _pickup = null;
+        _pickupStatus = result.status;
+        _isLocatingPickup = false;
+      });
+      return;
+    }
+    try {
+      final location = result.location!;
+      final place = await placeSearchClient.reverse(
+        accessToken: accessToken,
+        latitude: location.latitude,
+        longitude: location.longitude,
+      );
+      if (mounted) {
+        setState(() {
+          _pickup = place;
+          _pickupStatus = RiderLocationStatus.ready;
+          _isLocatingPickup = false;
+        });
+      }
+    } on RiderPlaceSearchException {
+      if (mounted) {
+        setState(() {
+          _pickup = null;
+          _pickupStatus = RiderLocationStatus.failed;
+          _isLocatingPickup = false;
+        });
+      }
+    }
   }
 
   Future<void> _loadSavedPlaces() async {
@@ -111,6 +175,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           latitude: ride.destination.latitude,
           longitude: ride.destination.longitude,
         );
+        _pickup = TamiPlace(
+          name: ride.pickup.address.split(',').first,
+          address: ride.pickup.address,
+          latitude: ride.pickup.latitude,
+          longitude: ride.pickup.longitude,
+        );
+        _pickupStatus = RiderLocationStatus.ready;
+        _isLocatingPickup = false;
       });
     } on RiderRideQueryException {
       // The booking surface remains available; reconnect recovery follows later.
@@ -133,10 +205,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         searchClient: placeSearchClient,
         savedPlaces: _savedPlaces,
         showSavedPlacePrompts: widget.savedPlaceClient == null,
-        proximity: RiderPlaceProximity(
-          latitude: _pickup.latitude,
-          longitude: _pickup.longitude,
-        ),
+        proximity: _pickup == null
+            ? null
+            : RiderPlaceProximity(
+                latitude: _pickup!.latitude,
+                longitude: _pickup!.longitude,
+              ),
       ),
     );
     if (!mounted || destination == null) {
@@ -147,14 +221,63 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     _openRideOptions(destination);
   }
 
+  Future<void> _openPickupSearch() async {
+    final placeSearchClient = widget.placeSearchClient;
+    final accessToken = widget.session?.accessToken;
+    if (placeSearchClient == null || accessToken == null) {
+      return;
+    }
+    final pickup = await showModalBottomSheet<TamiPlace>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => RiderPlaceSearchSheet(
+        mode: RiderPlaceSearchMode.pickup,
+        accessToken: accessToken,
+        searchClient: placeSearchClient,
+        savedPlaces: _savedPlaces,
+        showSavedPlacePrompts: widget.savedPlaceClient == null,
+        proximity: _pickup == null
+            ? null
+            : RiderPlaceProximity(
+                latitude: _pickup!.latitude,
+                longitude: _pickup!.longitude,
+              ),
+      ),
+    );
+    if (!mounted || pickup == null) {
+      return;
+    }
+    setState(() {
+      _pickup = pickup;
+      _pickupStatus = RiderLocationStatus.ready;
+      _isLocatingPickup = false;
+    });
+  }
+
+  Future<void> _openLocationSettings() async {
+    await widget.locationClient?.openSettings(_pickupStatus);
+  }
+
   void _openRideOptions(TamiPlace destination) {
+    final pickup = _pickup;
+    if (pickup == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Choose a pickup before selecting a ride.')),
+      );
+      return;
+    }
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => RideOptionsSheet(
         destination: destination,
-        pickup: _pickup,
+        pickup: RiderCoordinates(
+          latitude: pickup.latitude,
+          longitude: pickup.longitude,
+          address: pickup.address,
+        ),
         accessToken: widget.session?.accessToken,
         pricingClient: widget.pricingClient,
         onConfirm: _requestRide,
@@ -165,7 +288,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   Future<void> _requestRide(RideSelection selection) async {
     final bookingClient = widget.bookingClient;
     final session = widget.session;
-    if (bookingClient == null || session == null) {
+    final pickup = _pickup;
+    if (bookingClient == null || session == null || pickup == null) {
       throw const RiderBookingException('Sign in to request a ride.');
     }
 
@@ -173,7 +297,11 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       accessToken: session.accessToken,
       request: CreateRiderRideRequest(
         categoryCode: selection.categoryCode,
-        pickup: _pickup,
+        pickup: RiderCoordinates(
+          latitude: pickup.latitude,
+          longitude: pickup.longitude,
+          address: pickup.address,
+        ),
         destination: RiderCoordinates(
           latitude: selection.destination.latitude,
           longitude: selection.destination.longitude,
@@ -277,7 +405,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 children: [
                   Row(
                     children: [
-                      const _CityPill(),
+                      _CityPill(cityName: widget.session?.rider.cityName ?? 'Sindh'),
                       const Spacer(),
                       TamiGlass(
                         key: const Key('rider-safety-glass'),
@@ -297,6 +425,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: _activeRide == null
                         ? BookingComposer(
+                            pickup: _pickup,
+                            pickupStatus: _pickupStatus,
+                            isLocatingPickup: _isLocatingPickup,
+                            onPickupTap: _openPickupSearch,
+                            onPickupRetry: _resolveCurrentPickup,
+                            onPickupSettings: _openLocationSettings,
                             destination: _destination,
                             onDestinationTap: _openDestinationSearch,
                           )
@@ -322,21 +456,17 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 }
 
-const _pickup = RiderCoordinates(
-  latitude: 24.8607,
-  longitude: 67.0011,
-  address: 'Frere Hall, Karachi',
-);
-
 class _CityPill extends StatelessWidget {
-  const _CityPill();
+  const _CityPill({required this.cityName});
+
+  final String cityName;
 
   @override
   Widget build(BuildContext context) {
-    return const TamiGlass(
+    return TamiGlass(
       key: Key('rider-city-glass'),
       level: TamiGlassLevel.navigation,
-      semanticLabel: 'Service city Karachi',
+      semanticLabel: 'Service city $cityName',
       padding: EdgeInsets.zero,
       child: Padding(
         padding: EdgeInsets.symmetric(horizontal: 14, vertical: 11),
@@ -349,7 +479,7 @@ class _CityPill extends StatelessWidget {
               color: TamiColors.civicGreen,
             ),
             SizedBox(width: 8),
-            Text('Karachi', style: TextStyle(fontWeight: FontWeight.w700)),
+            Text(cityName, style: const TextStyle(fontWeight: FontWeight.w700)),
             SizedBox(width: 4),
             Icon(Icons.expand_more, size: 18),
           ],

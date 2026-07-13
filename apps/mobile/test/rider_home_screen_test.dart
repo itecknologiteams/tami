@@ -9,8 +9,125 @@ import 'package:tami_mobile/src/features/rider/rider_saved_place_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_pricing_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_place_search_client.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
+import 'package:tami_mobile/src/location/rider_location.dart';
+import 'package:tami_mobile/src/location/rider_location_client.dart';
 
 void main() {
+  testWidgets('resolves current pickup and shows the rider session city', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _hyderabadSession,
+          locationClient: _ReadyLocationClient(),
+          placeSearchClient: _HyderabadPlaceSearchClient(),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hyderabad'), findsOneWidget);
+    expect(find.text('Rani Bagh'), findsOneWidget);
+    expect(find.text('Qasimabad, Hyderabad'), findsOneWidget);
+  });
+
+  testWidgets('allows manual pickup when location permission is denied', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _hyderabadSession,
+          locationClient: _DeniedLocationClient(),
+          placeSearchClient: _HyderabadPlaceSearchClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose pickup'), findsOneWidget);
+    expect(find.text('Location permission is off'), findsOneWidget);
+    await tester.tap(find.text('Choose pickup'));
+    await tester.pumpAndSettle();
+    expect(find.text('Choose pickup'), findsWidgets);
+    await tester.enterText(find.byKey(const Key('place-search')), 'Rani');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    await tester.tap(find.text('Rani Bagh'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Qasimabad, Hyderabad'), findsOneWidget);
+  });
+
+  testWidgets('opens app settings for permanently denied location', (
+    tester,
+  ) async {
+    final locationClient = _ForeverDeniedLocationClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _hyderabadSession,
+          locationClient: locationClient,
+          placeSearchClient: const _HyderabadPlaceSearchClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Open location settings'));
+    await tester.pump();
+
+    expect(
+      locationClient.openedStatus,
+      RiderLocationStatus.permissionDeniedForever,
+    );
+  });
+
+  testWidgets('retries a failed current location lookup', (tester) async {
+    final locationClient = _RetryLocationClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _hyderabadSession,
+          locationClient: locationClient,
+          placeSearchClient: const _HyderabadPlaceSearchClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Current location is unavailable'), findsOneWidget);
+    await tester.tap(find.byTooltip('Retry current location'));
+    await tester.pumpAndSettle();
+
+    expect(locationClient.locateCalls, 2);
+    expect(find.text('Rani Bagh'), findsOneWidget);
+  });
+
+  testWidgets('opens location settings when device services are disabled', (
+    tester,
+  ) async {
+    final locationClient = _ServicesDisabledLocationClient();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _hyderabadSession,
+          locationClient: locationClient,
+          placeSearchClient: const _HyderabadPlaceSearchClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Location services are off'), findsOneWidget);
+    await tester.tap(find.byTooltip('Open location settings'));
+    await tester.pump();
+
+    expect(locationClient.openedStatus, RiderLocationStatus.servicesDisabled);
+  });
+
   testWidgets('uses a rider saved place as the destination', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -18,6 +135,7 @@ void main() {
           session: _session,
           savedPlaceClient: _HomePlaceClient(),
           placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
@@ -79,6 +197,7 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           placeSearchClient: _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
@@ -97,6 +216,7 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           placeSearchClient: _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
@@ -106,7 +226,7 @@ void main() {
     expect(find.byKey(const Key('rider-safety-glass')), findsOneWidget);
     expect(find.byKey(const Key('rider-booking-glass')), findsOneWidget);
     expect(find.text('Where to?'), findsOneWidget);
-    expect(find.text('Current location'), findsOneWidget);
+    expect(find.text('Frere Hall'), findsOneWidget);
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
@@ -126,16 +246,14 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           placeSearchClient: _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('place-search')),
-      'Mazar',
-    );
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
@@ -161,6 +279,7 @@ void main() {
               id: 'rider_123',
               phone: '+923001234567',
               cityId: 'city_karachi',
+              cityName: 'Karachi',
               name: 'Aamir',
               email: null,
               imageUrl: null,
@@ -169,16 +288,14 @@ void main() {
           bookingClient: bookingClient,
           pricingClient: _PricingClient(),
           placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('place-search')),
-      'Mazar',
-    );
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
@@ -190,6 +307,7 @@ void main() {
     expect(bookingClient.accessToken, 'rider-session-token');
     expect(bookingClient.request?.categoryCode, 'standard_taxi');
     expect(bookingClient.request?.paymentMethod, RiderPaymentMethod.cash);
+    expect(bookingClient.request?.pickup.address, 'Civil Lines, Karachi');
     expect(
       bookingClient.request?.destination.address,
       'Mazar-e-Quaid, Karachi',
@@ -206,16 +324,14 @@ void main() {
           session: _session,
           pricingClient: _PricingClient(),
           placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('place-search')),
-      'Mazar',
-    );
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
@@ -234,16 +350,14 @@ void main() {
           session: _session,
           pricingClient: _FailingPricingClient(),
           placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('place-search')),
-      'Mazar',
-    );
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
@@ -270,6 +384,7 @@ void main() {
               id: 'rider_123',
               phone: '+923001234567',
               cityId: 'city_karachi',
+              cityName: 'Karachi',
               name: 'Aamir',
               email: null,
               imageUrl: null,
@@ -278,6 +393,7 @@ void main() {
           bookingClient: bookingClient,
           pricingClient: _PricingClient(),
           placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
@@ -331,6 +447,7 @@ void main() {
               id: 'rider_123',
               phone: '+923001234567',
               cityId: 'city_karachi',
+              cityName: 'Karachi',
               name: 'Aamir',
               email: null,
               imageUrl: null,
@@ -376,16 +493,14 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           placeSearchClient: _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
         ),
       ),
     );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('place-search')),
-      'Mazar',
-    );
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
     await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
@@ -403,7 +518,30 @@ const _session = RiderSession(
     id: 'rider_123',
     phone: '+923001234567',
     cityId: 'city_karachi',
+    cityName: 'Karachi',
     name: 'Aamir',
+    email: null,
+    imageUrl: null,
+  ),
+);
+
+const _karachiPickup = TamiPlace(
+  id: 'karachi-frere',
+  cityId: 'city_karachi',
+  name: 'Frere Hall',
+  address: 'Civil Lines, Karachi',
+  latitude: 24.8468,
+  longitude: 67.0303,
+);
+
+const _hyderabadSession = RiderSession(
+  accessToken: 'hyderabad-token',
+  rider: RiderProfile(
+    id: 'rider_hyderabad',
+    phone: '+923001234568',
+    cityId: 'city_hyderabad',
+    cityName: 'Hyderabad',
+    name: 'Sara',
     email: null,
     imageUrl: null,
   ),
@@ -615,5 +753,120 @@ class _PlaceSearchClient implements RiderPlaceSearchClient {
         longitude: 67.0407,
       ),
     ];
+  }
+}
+
+class _HyderabadPlaceSearchClient implements RiderPlaceSearchClient {
+  const _HyderabadPlaceSearchClient();
+
+  @override
+  Future<TamiPlace> reverse({
+    required String accessToken,
+    required double latitude,
+    required double longitude,
+  }) async => const TamiPlace(
+    id: 'hyderabad-rani-bagh',
+    cityId: 'city_hyderabad',
+    name: 'Rani Bagh',
+    address: 'Qasimabad, Hyderabad',
+    latitude: 25.3935,
+    longitude: 68.3544,
+  );
+
+  @override
+  Future<List<TamiPlace>> search({
+    required String accessToken,
+    required String query,
+    RiderPlaceProximity? proximity,
+  }) async => const [
+    TamiPlace(
+      id: 'hyderabad-rani-bagh',
+      cityId: 'city_hyderabad',
+      name: 'Rani Bagh',
+      address: 'Qasimabad, Hyderabad',
+      latitude: 25.3935,
+      longitude: 68.3544,
+    ),
+  ];
+}
+
+class _ReadyLocationClient implements RiderLocationClient {
+  const _ReadyLocationClient();
+
+  @override
+  Future<RiderLocationResult> locate() async {
+    return RiderLocationResult.ready(
+      RiderDeviceLocation(
+        latitude: 25.3935,
+        longitude: 68.3544,
+        accuracyMeters: 7,
+        capturedAt: DateTime.utc(2026, 7, 13),
+      ),
+    );
+  }
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {}
+}
+
+class _DeniedLocationClient implements RiderLocationClient {
+  const _DeniedLocationClient();
+
+  @override
+  Future<RiderLocationResult> locate() async {
+    return const RiderLocationResult.unavailable(
+      RiderLocationStatus.permissionDenied,
+    );
+  }
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {}
+}
+
+class _ForeverDeniedLocationClient implements RiderLocationClient {
+  RiderLocationStatus? openedStatus;
+
+  @override
+  Future<RiderLocationResult> locate() async {
+    return const RiderLocationResult.unavailable(
+      RiderLocationStatus.permissionDeniedForever,
+    );
+  }
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {
+    openedStatus = status;
+  }
+}
+
+class _RetryLocationClient implements RiderLocationClient {
+  int locateCalls = 0;
+
+  @override
+  Future<RiderLocationResult> locate() async {
+    locateCalls += 1;
+    if (locateCalls == 1) {
+      return const RiderLocationResult.unavailable(RiderLocationStatus.failed);
+    }
+    return _ReadyLocationClient().locate();
+  }
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {}
+}
+
+class _ServicesDisabledLocationClient implements RiderLocationClient {
+  RiderLocationStatus? openedStatus;
+
+  @override
+  Future<RiderLocationResult> locate() async {
+    return const RiderLocationResult.unavailable(
+      RiderLocationStatus.servicesDisabled,
+    );
+  }
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {
+    openedStatus = status;
   }
 }

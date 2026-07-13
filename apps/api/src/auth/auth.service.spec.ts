@@ -6,7 +6,7 @@ import { InMemoryAuthRepository } from "./in-memory-auth.repository";
 describe("AuthService", () => {
   it("issues a development code and exchanges it for a hashed rider session", async () => {
     const repository = new InMemoryAuthRepository([
-      { id: "city_karachi", active: true },
+      { id: "city_karachi", name: "Karachi", active: true },
     ]);
     const service = new AuthService(repository, new DevelopmentOtpStore());
 
@@ -21,6 +21,7 @@ describe("AuthService", () => {
       id: expect.any(String),
       phone: "+923001234567",
       cityId: "city_karachi",
+      cityName: "Karachi",
       name: null,
       email: null,
       imageUrl: null,

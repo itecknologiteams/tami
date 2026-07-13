@@ -15,11 +15,13 @@ function toRiderProfile(rider: {
   name: string | null;
   email: string | null;
   imageUrl: string | null;
+  city: {name: string};
 }): RiderProfile {
   return {
     id: rider.id,
     phone: rider.phone,
     cityId: rider.cityId,
+    cityName: rider.city.name,
     name: rider.name,
     email: rider.email,
     imageUrl: rider.imageUrl,
@@ -50,13 +52,17 @@ export class PrismaAuthRepository extends AuthRepository {
   }
 
   async findRiderByPhone(phone: string): Promise<RiderProfile | null> {
-    const rider = await this.prisma.rider.findUnique({ where: { phone } });
+    const rider = await this.prisma.rider.findUnique({
+      where: { phone },
+      include: {city: {select: {name: true}}},
+    });
     return rider ? toRiderProfile(rider) : null;
   }
 
   async findRiderById(riderId: string): Promise<RiderProfile | null> {
     const rider = await this.prisma.rider.findUnique({
       where: { id: riderId },
+      include: {city: {select: {name: true}}},
     });
     return rider ? toRiderProfile(rider) : null;
   }
@@ -65,7 +71,10 @@ export class PrismaAuthRepository extends AuthRepository {
     phone: string;
     cityId: string;
   }): Promise<RiderProfile> {
-    const rider = await this.prisma.rider.create({ data: input });
+    const rider = await this.prisma.rider.create({
+      data: input,
+      include: {city: {select: {name: true}}},
+    });
     return toRiderProfile(rider);
   }
 
@@ -76,6 +85,7 @@ export class PrismaAuthRepository extends AuthRepository {
     const rider = await this.prisma.rider.update({
       where: { id: riderId },
       data: { cityId },
+      include: {city: {select: {name: true}}},
     });
 
     return toRiderProfile(rider);
@@ -93,6 +103,7 @@ export class PrismaAuthRepository extends AuthRepository {
     const rider = await this.prisma.rider.update({
       where: { id: riderId },
       data: input,
+      include: {city: {select: {name: true}}},
     });
     return toRiderProfile(rider);
   }

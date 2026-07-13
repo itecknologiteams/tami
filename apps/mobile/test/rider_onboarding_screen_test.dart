@@ -4,6 +4,8 @@ import 'package:tami_mobile/src/app/tami_mobile_app.dart';
 import 'package:tami_mobile/src/auth/rider_identity_client.dart';
 import 'package:tami_mobile/src/auth/rider_onboarding_screen.dart';
 import 'package:tami_mobile/src/auth/rider_session.dart';
+import 'package:tami_mobile/src/location/rider_location.dart';
+import 'package:tami_mobile/src/location/rider_location_client.dart';
 import 'package:tami_mobile/src/ui/tami_theme.dart';
 
 void main() {
@@ -14,6 +16,7 @@ void main() {
       TamiMobileApp(
         mode: TamiAppMode.rider,
         riderIdentityClient: FakeRiderIdentityClient(),
+        riderLocationClient: _DeniedRiderLocationClient(),
       ),
     );
 
@@ -28,6 +31,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Development code: 123456'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hyderabad').last);
+    await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('code-input')), '123456');
     await tester.tap(find.text('Verify code'));
     await tester.pumpAndSettle();
@@ -38,6 +45,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Where to?'), findsOneWidget);
+    expect(find.text('Hyderabad'), findsOneWidget);
   });
 
   testWidgets('keeps onboarding usable at two hundred percent text scale', (
@@ -73,6 +81,7 @@ class FakeRiderIdentityClient implements RiderIdentityClient {
   @override
   Future<List<RiderCity>> getActiveCities() async => const [
     RiderCity(id: 'city_karachi', name: 'Karachi'),
+    RiderCity(id: 'city_hyderabad', name: 'Hyderabad'),
   ];
 
   @override
@@ -96,6 +105,7 @@ class FakeRiderIdentityClient implements RiderIdentityClient {
         id: 'rider_123',
         phone: '+923001234567',
         cityId: 'city_karachi',
+        cityName: 'Karachi',
         name: null,
         email: null,
         imageUrl: null,
@@ -115,9 +125,21 @@ class FakeRiderIdentityClient implements RiderIdentityClient {
       id: 'rider_123',
       phone: '+923001234567',
       cityId: cityId,
+      cityName: cityId == 'city_hyderabad' ? 'Hyderabad' : 'Karachi',
       name: name,
       email: email,
       imageUrl: imageUrl,
     );
   }
+}
+
+class _DeniedRiderLocationClient implements RiderLocationClient {
+  @override
+  Future<RiderLocationResult> locate() async =>
+      const RiderLocationResult.unavailable(
+        RiderLocationStatus.permissionDenied,
+      );
+
+  @override
+  Future<void> openSettings(RiderLocationStatus status) async {}
 }

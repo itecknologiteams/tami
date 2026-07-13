@@ -13,6 +13,7 @@ describe("PrismaAuthRepository", () => {
           id: "rider_123",
           phone: "+923001234567",
           cityId: "city_karachi",
+          city: {name: "Karachi"},
           name: null,
           email: null,
           imageUrl: null,
@@ -46,7 +47,9 @@ describe("PrismaAuthRepository", () => {
 
     expect(prisma.rider.create).toHaveBeenCalledWith({
       data: { phone: "+923001234567", cityId: "city_karachi" },
+      include: {city: {select: {name: true}}},
     });
+    expect(rider.cityName).toBe("Karachi");
     expect(prisma.riderSession.create).toHaveBeenCalledWith({
       data: {
         riderId: "rider_123",

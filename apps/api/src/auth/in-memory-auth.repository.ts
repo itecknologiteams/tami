@@ -45,6 +45,7 @@ export class InMemoryAuthRepository extends AuthRepository {
       id: `rider_${++this.riderSequence}`,
       phone: input.phone,
       cityId: input.cityId,
+      cityName: this.cityName(input.cityId),
       name: null,
       email: null,
       imageUrl: null,
@@ -64,6 +65,7 @@ export class InMemoryAuthRepository extends AuthRepository {
     }
 
     rider.cityId = cityId;
+    rider.cityName = this.cityName(cityId);
     return rider;
   }
 
@@ -82,6 +84,7 @@ export class InMemoryAuthRepository extends AuthRepository {
     }
 
     rider.cityId = input.cityId;
+    rider.cityName = this.cityName(input.cityId);
     rider.name = input.name;
     rider.email = input.email;
     rider.imageUrl = input.imageUrl;
@@ -127,5 +130,10 @@ export class InMemoryAuthRepository extends AuthRepository {
 
     session.lastUsedAt = now;
     return { id: rider.id, phone: rider.phone, cityId: rider.cityId };
+  }
+
+  private cityName(cityId: string): string {
+    const city = this.cities.find((candidate) => candidate.id === cityId);
+    return city?.name ?? cityId;
   }
 }

@@ -143,7 +143,7 @@
 - [x] **Step 5: Write failing widget tests** for two-character minimum, 350 ms debounce, stale response suppression, loading, empty, retry, saved places, and pickup/destination titles.
 - [x] **Step 6: Replace `_destinationOptions` with the reusable provider-backed sheet**.
 - [x] **Step 7: Run focused widget tests and analyze to verify GREEN**.
-- [ ] **Step 8: Commit** with `git commit -m "feat: add live rider place search"`.
+- [x] **Step 8: Commit** with `git commit -m "feat: add live rider place search"`.
 
 ### Task 6: Rider Pickup Orchestration
 
@@ -161,12 +161,12 @@
 - Produces: home pickup state loaded from current location plus reverse geocoding, with manual edit/retry/settings actions.
 - Consumes: `RiderLocationClient`, `RiderPlaceSearchClient`, rider session city, and `TamiPlace`.
 
-- [ ] **Step 1: Write failing API auth tests** expecting `cityName` in active rider profile/session responses.
-- [ ] **Step 2: Run auth tests to verify RED, then implement the relation query and response mapping**.
-- [ ] **Step 3: Write failing rider-home tests** for locating, ready current pickup, denied, denied-forever settings, service-disabled, retry, manual pickup, session city label, and no hardcoded Frere Hall request.
-- [ ] **Step 4: Run the focused Flutter tests to verify RED**.
-- [ ] **Step 5: Implement pickup state orchestration and booking composer controls**; keep confirmation inaccessible until explicit pickup and destination exist.
-- [ ] **Step 6: Run auth, rider-home, and full Flutter tests to verify GREEN**.
+- [x] **Step 1: Write failing API auth tests** expecting `cityName` in active rider profile/session responses.
+- [x] **Step 2: Run auth tests to verify RED, then implement the relation query and response mapping**.
+- [x] **Step 3: Write failing rider-home tests** for locating, ready current pickup, denied, denied-forever settings, service-disabled, retry, manual pickup, session city label, and no hardcoded Frere Hall request.
+- [x] **Step 4: Run the focused Flutter tests to verify RED**.
+- [x] **Step 5: Implement pickup state orchestration and booking composer controls**; keep confirmation inaccessible until explicit pickup and destination exist.
+- [x] **Step 6: Run auth, rider-home, and full Flutter tests to verify GREEN**.
 - [ ] **Step 7: Commit** with `git commit -m "feat: add city aware rider pickup"`.
 
 ### Task 7: Route-Aware Map Surface

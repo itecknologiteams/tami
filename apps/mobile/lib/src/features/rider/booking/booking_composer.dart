@@ -2,17 +2,30 @@ import 'package:flutter/material.dart';
 
 import '../../../ui/tami_colors.dart';
 import '../../../ui/tami_glass.dart';
+import '../../../location/rider_location.dart';
 import 'tami_place.dart';
 
 class BookingComposer extends StatelessWidget {
   const BookingComposer({
     required this.destination,
+    required this.pickup,
+    required this.pickupStatus,
+    required this.isLocatingPickup,
+    required this.onPickupTap,
     required this.onDestinationTap,
+    this.onPickupRetry,
+    this.onPickupSettings,
     super.key,
   });
 
   final TamiPlace? destination;
+  final TamiPlace? pickup;
+  final RiderLocationStatus pickupStatus;
+  final bool isLocatingPickup;
+  final VoidCallback onPickupTap;
   final VoidCallback onDestinationTap;
+  final VoidCallback? onPickupRetry;
+  final VoidCallback? onPickupSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -33,11 +46,20 @@ class BookingComposer extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          const _LocationRow(
-            icon: Icons.my_location,
-            title: 'Current location',
-            subtitle: 'Use your pickup point',
-            accent: TamiColors.routeCyan,
+          InkWell(
+            key: const Key('pickup-trigger'),
+            onTap: onPickupTap,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: _PickupRow(
+                pickup: pickup,
+                status: pickupStatus,
+                isLocating: isLocatingPickup,
+                onRetry: onPickupRetry,
+                onSettings: onPickupSettings,
+              ),
+            ),
           ),
           const Divider(height: 24),
           InkWell(
@@ -62,18 +84,89 @@ class BookingComposer extends StatelessWidget {
   }
 }
 
+class _PickupRow extends StatelessWidget {
+  const _PickupRow({
+    required this.pickup,
+    required this.status,
+    required this.isLocating,
+    this.onRetry,
+    this.onSettings,
+  });
+
+  final TamiPlace? pickup;
+  final RiderLocationStatus status;
+  final bool isLocating;
+  final VoidCallback? onRetry;
+  final VoidCallback? onSettings;
+
+  @override
+  Widget build(BuildContext context) {
+    final (title, subtitle) = _copy;
+    final settingsAvailable =
+        status == RiderLocationStatus.servicesDisabled ||
+        status == RiderLocationStatus.permissionDeniedForever;
+    return _LocationRow(
+      icon: isLocating ? Icons.location_searching : Icons.my_location,
+      title: title,
+      subtitle: subtitle,
+      accent: TamiColors.routeCyan,
+      trailing: isLocating
+          ? const SizedBox.square(
+              dimension: 22,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : settingsAvailable
+          ? IconButton(
+              tooltip: 'Open location settings',
+              onPressed: onSettings,
+              icon: const Icon(Icons.settings_outlined),
+            )
+          : status == RiderLocationStatus.failed ||
+                status == RiderLocationStatus.permissionDenied
+          ? IconButton(
+              tooltip: 'Retry current location',
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+            )
+          : const Icon(Icons.chevron_right),
+    );
+  }
+
+  (String, String) get _copy {
+    if (isLocating) {
+      return ('Finding your pickup', 'Getting your current location');
+    }
+    if (status == RiderLocationStatus.ready && pickup != null) {
+      return (pickup!.name, pickup!.address);
+    }
+    return switch (status) {
+      RiderLocationStatus.servicesDisabled =>
+        ('Choose pickup', 'Location services are off'),
+      RiderLocationStatus.permissionDenied =>
+        ('Choose pickup', 'Location permission is off'),
+      RiderLocationStatus.permissionDeniedForever =>
+        ('Choose pickup', 'Location access is blocked'),
+      RiderLocationStatus.failed =>
+        ('Choose pickup', 'Current location is unavailable'),
+      RiderLocationStatus.ready => ('Choose pickup', 'Select a pickup point'),
+    };
+  }
+}
+
 class _LocationRow extends StatelessWidget {
   const _LocationRow({
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.accent,
+    this.trailing,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final Color accent;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +192,7 @@ class _LocationRow extends StatelessWidget {
             ],
           ),
         ),
-        const Icon(Icons.chevron_right),
+        trailing ?? const Icon(Icons.chevron_right),
       ],
     );
   }

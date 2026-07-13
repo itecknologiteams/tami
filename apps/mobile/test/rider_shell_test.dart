@@ -16,6 +16,7 @@ void main() {
               id: 'rider_123',
               phone: '+923001234567',
               cityId: 'city_karachi',
+              cityName: 'Karachi',
               name: 'Aamir Khan',
               email: 'aamir@example.com',
               imageUrl: null,

@@ -7,8 +7,8 @@ import { RiderProfileService } from "./rider-profile.service";
 describe("RiderProfileService", () => {
   it("updates the authenticated rider profile and selected active city", async () => {
     const repository = new InMemoryAuthRepository([
-      { id: "city_karachi", active: true },
-      { id: "city_hyderabad", active: true },
+      { id: "city_karachi", name: "Karachi", active: true },
+      { id: "city_hyderabad", name: "Hyderabad", active: true },
     ]);
     const authService = new AuthService(repository, new DevelopmentOtpStore());
     const challenge = await authService.requestOtp("+923001234567");
@@ -30,6 +30,7 @@ describe("RiderProfileService", () => {
       id: session.rider.id,
       phone: "+923001234567",
       cityId: "city_hyderabad",
+      cityName: "Hyderabad",
       name: "Aamir",
       email: "aamir@example.com",
       imageUrl: "https://images.example/rider.jpg",

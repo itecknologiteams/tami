@@ -53,6 +53,7 @@ class _RiderShellState extends State<RiderShell> {
         savedPlaceClient: widget.savedPlaceClient,
         pricingClient: widget.pricingClient,
         placeSearchClient: widget.placeSearchClient,
+        locationClient: widget.locationClient,
       ),
       RiderTripsScreen(
         session: widget.session,

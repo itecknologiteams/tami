@@ -43,6 +43,7 @@ const _session = RiderSession(
     id: 'rider_1',
     phone: '+923001234567',
     cityId: 'city_karachi',
+    cityName: 'Karachi',
     name: 'Aamir',
     email: null,
     imageUrl: null,

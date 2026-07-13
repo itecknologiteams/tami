@@ -34,6 +34,7 @@ class RiderProfile {
     required this.id,
     required this.phone,
     required this.cityId,
+    required this.cityName,
     required this.name,
     required this.email,
     required this.imageUrl,
@@ -42,6 +43,7 @@ class RiderProfile {
   final String id;
   final String phone;
   final String cityId;
+  final String cityName;
   final String? name;
   final String? email;
   final String? imageUrl;
@@ -51,6 +53,7 @@ class RiderProfile {
       id: json['id'] as String,
       phone: json['phone'] as String,
       cityId: json['cityId'] as String,
+      cityName: json['cityName'] as String,
       name: json['name'] as String?,
       email: json['email'] as String?,
       imageUrl: json['imageUrl'] as String?,

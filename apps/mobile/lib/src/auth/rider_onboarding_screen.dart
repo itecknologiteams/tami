@@ -113,7 +113,7 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
     }
 
     await _run(() async {
-      await widget.client.updateProfile(
+      final profile = await widget.client.updateProfile(
         accessToken: session.accessToken,
         cityId: cityId,
         name: _nameController.text.trim(),
@@ -126,7 +126,10 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
           builder: (_) => RiderShell(
-            session: session,
+            session: RiderSession(
+              accessToken: session.accessToken,
+              rider: profile,
+            ),
             bookingClient: widget.bookingClient,
             chatClient: widget.chatClient,
             rideQueryClient: widget.rideQueryClient,
