@@ -5,9 +5,31 @@ import 'package:tami_mobile/src/features/rider/rider_booking_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_chat_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
 import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
+import 'package:tami_mobile/src/features/rider/rider_saved_place_client.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 
 void main() {
+  testWidgets('uses a rider saved place as the destination', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          savedPlaceClient: _HomePlaceClient(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Where to?'));
+    await tester.pumpAndSettle();
+    expect(find.text('PECHS, Karachi'), findsOneWidget);
+    await tester.tap(find.text('Home'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Choose a ride'), findsOneWidget);
+    expect(find.byKey(const Key('destination-search-glass')), findsNothing);
+    expect(find.text('PECHS, Karachi'), findsOneWidget);
+  });
   testWidgets('restores the current ride from the server', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -386,4 +408,33 @@ class _FakeRideQueryClient implements RiderRideQueryClient {
   Future<List<RiderRide>> getUpcomingRides({
     required String accessToken,
   }) async => const [];
+}
+
+class _HomePlaceClient implements RiderSavedPlaceClient {
+  @override
+  Future<void> deletePlace({
+    required String accessToken,
+    required String placeId,
+  }) async {}
+
+  @override
+  Future<List<RiderSavedPlace>> listPlaces({
+    required String accessToken,
+  }) async => const [
+    RiderSavedPlace(
+      id: 'place_home',
+      designation: RiderPlaceDesignation.home,
+      label: 'Home',
+      address: 'PECHS, Karachi',
+      latitude: 24.86,
+      longitude: 67.06,
+    ),
+  ];
+
+  @override
+  Future<RiderSavedPlace> savePlace({
+    required String accessToken,
+    required SaveRiderPlaceRequest request,
+    String? placeId,
+  }) => throw UnimplementedError();
 }

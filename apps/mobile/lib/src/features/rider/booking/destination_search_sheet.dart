@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../ui/tami_colors.dart';
 import '../../../ui/tami_glass.dart';
 import 'tami_place.dart';
+import '../rider_saved_place_client.dart';
 
 const _destinationOptions = [
   TamiPlace(
@@ -32,7 +33,14 @@ const _destinationOptions = [
 ];
 
 class DestinationSearchSheet extends StatefulWidget {
-  const DestinationSearchSheet({super.key});
+  const DestinationSearchSheet({
+    this.savedPlaces = const [],
+    this.showSavedPlacePrompts = true,
+    super.key,
+  });
+
+  final List<RiderSavedPlace> savedPlaces;
+  final bool showSavedPlacePrompts;
 
   @override
   State<DestinationSearchSheet> createState() => _DestinationSearchSheetState();
@@ -108,17 +116,41 @@ class _DestinationSearchSheetState extends State<DestinationSearchSheet> {
                 ),
                 if (_query.isEmpty) ...[
                   const SizedBox(height: 24),
-                  const _SavedPlaceRow(
-                    icon: Icons.home_outlined,
-                    title: 'Home',
-                    subtitle: 'Save an address for faster booking',
-                  ),
-                  const SizedBox(height: 12),
-                  const _SavedPlaceRow(
-                    icon: Icons.business_center_outlined,
-                    title: 'Work',
-                    subtitle: 'Save an address for faster booking',
-                  ),
+                  if (widget.savedPlaces.isNotEmpty)
+                    for (final place in widget.savedPlaces)
+                      _SavedPlaceRow(
+                        icon: _savedPlaceIcon(place.designation),
+                        title: place.label,
+                        subtitle: place.address,
+                        onTap: () => Navigator.of(context).pop(
+                          TamiPlace(
+                            name: place.label,
+                            address: place.address,
+                            latitude: place.latitude,
+                            longitude: place.longitude,
+                          ),
+                        ),
+                      )
+                  else if (widget.showSavedPlacePrompts) ...[
+                    const _SavedPlaceRow(
+                      icon: Icons.home_outlined,
+                      title: 'Home',
+                      subtitle: 'Save an address for faster booking',
+                    ),
+                    const SizedBox(height: 12),
+                    const _SavedPlaceRow(
+                      icon: Icons.business_center_outlined,
+                      title: 'Work',
+                      subtitle: 'Save an address for faster booking',
+                    ),
+                  ] else
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'No saved places yet',
+                        style: TextStyle(color: TamiColors.mutedInk),
+                      ),
+                    ),
                 ] else ...[
                   const SizedBox(height: 18),
                   for (final place in _matchingDestinations)
@@ -150,11 +182,13 @@ class _SavedPlaceRow extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -164,6 +198,15 @@ class _SavedPlaceRow extends StatelessWidget {
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
       subtitle: Text(subtitle),
       trailing: const Icon(Icons.add),
+      onTap: onTap,
     );
   }
+}
+
+IconData _savedPlaceIcon(RiderPlaceDesignation? designation) {
+  return switch (designation) {
+    RiderPlaceDesignation.home => Icons.home_outlined,
+    RiderPlaceDesignation.work => Icons.business_center_outlined,
+    null => Icons.bookmark_outline,
+  };
 }

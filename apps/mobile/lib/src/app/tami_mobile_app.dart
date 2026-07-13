@@ -6,6 +6,7 @@ import '../features/driver/driver_home_screen.dart';
 import '../features/rider/rider_booking_client.dart';
 import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_ride_query_client.dart';
+import '../features/rider/rider_saved_place_client.dart';
 import '../ui/tami_theme.dart';
 
 enum TamiAppMode { rider, driver }
@@ -17,6 +18,7 @@ class TamiMobileApp extends StatelessWidget {
     this.riderBookingClient,
     this.riderChatClient,
     this.riderRideQueryClient,
+    this.riderSavedPlaceClient,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class TamiMobileApp extends StatelessWidget {
   final RiderBookingClient? riderBookingClient;
   final RiderChatClient? riderChatClient;
   final RiderRideQueryClient? riderRideQueryClient;
+  final RiderSavedPlaceClient? riderSavedPlaceClient;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +48,9 @@ class TamiMobileApp extends StatelessWidget {
           rideQueryClient:
               riderRideQueryClient ??
               HttpRiderRideQueryClient(baseUrl: _apiBaseUrl),
+          savedPlaceClient:
+              riderSavedPlaceClient ??
+              HttpRiderSavedPlaceClient(baseUrl: _apiBaseUrl),
         ),
         TamiAppMode.driver => const DriverHomeScreen(),
       },

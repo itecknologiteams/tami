@@ -2,14 +2,22 @@ import 'package:flutter/material.dart';
 
 import '../../../auth/rider_session.dart';
 import '../../../ui/tami_colors.dart';
+import '../rider_saved_place_client.dart';
+import 'rider_saved_places_screen.dart';
 
 class RiderAccountScreen extends StatelessWidget {
-  const RiderAccountScreen({required this.rider, super.key});
+  const RiderAccountScreen({
+    required this.session,
+    this.savedPlaceClient,
+    super.key,
+  });
 
-  final RiderProfile rider;
+  final RiderSession session;
+  final RiderSavedPlaceClient? savedPlaceClient;
 
   @override
   Widget build(BuildContext context) {
+    final rider = session.rider;
     final initial = (rider.name?.trim().isNotEmpty ?? false)
         ? rider.name!.trim().substring(0, 1).toUpperCase()
         : 'T';
@@ -38,9 +46,19 @@ class RiderAccountScreen extends StatelessWidget {
             trailing: const Icon(Icons.chevron_right),
           ),
           const Divider(height: 32),
-          const _AccountRow(
+          _AccountRow(
             icon: Icons.bookmark_outline,
             label: 'Saved places',
+            onTap: savedPlaceClient == null
+                ? null
+                : () => Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => RiderSavedPlacesScreen(
+                        session: session,
+                        savedPlaceClient: savedPlaceClient!,
+                      ),
+                    ),
+                  ),
           ),
           const _AccountRow(
             icon: Icons.account_balance_wallet_outlined,
@@ -58,10 +76,11 @@ class RiderAccountScreen extends StatelessWidget {
 }
 
 class _AccountRow extends StatelessWidget {
-  const _AccountRow({required this.icon, required this.label});
+  const _AccountRow({required this.icon, required this.label, this.onTap});
 
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -70,7 +89,7 @@ class _AccountRow extends StatelessWidget {
       leading: Icon(icon),
       title: Text(label),
       trailing: const Icon(Icons.chevron_right),
-      onTap: () {},
+      onTap: onTap,
     );
   }
 }

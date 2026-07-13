@@ -13,6 +13,7 @@ import 'chat/ride_chat_sheet.dart';
 import 'rider_booking_client.dart';
 import 'rider_chat_client.dart';
 import 'rider_ride_query_client.dart';
+import 'rider_saved_place_client.dart';
 
 export 'booking/tami_place.dart';
 
@@ -23,6 +24,7 @@ class RiderHomeScreen extends StatefulWidget {
     this.bookingClient,
     this.chatClient,
     this.rideQueryClient,
+    this.savedPlaceClient,
     this.initialRide,
     this.initialDestination,
     super.key,
@@ -33,6 +35,7 @@ class RiderHomeScreen extends StatefulWidget {
   final RiderBookingClient? bookingClient;
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
+  final RiderSavedPlaceClient? savedPlaceClient;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
 
@@ -43,6 +46,7 @@ class RiderHomeScreen extends StatefulWidget {
 class _RiderHomeScreenState extends State<RiderHomeScreen> {
   TamiPlace? _destination;
   RiderBookingRide? _activeRide;
+  List<RiderSavedPlace> _savedPlaces = const [];
 
   @override
   void initState() {
@@ -51,6 +55,23 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     _activeRide = widget.initialRide;
     if (_activeRide == null) {
       _restoreCurrentRide();
+    }
+    _loadSavedPlaces();
+  }
+
+  Future<void> _loadSavedPlaces() async {
+    final client = widget.savedPlaceClient;
+    final session = widget.session;
+    if (client == null || session == null) {
+      return;
+    }
+    try {
+      final places = await client.listPlaces(accessToken: session.accessToken);
+      if (mounted) {
+        setState(() => _savedPlaces = places);
+      }
+    } on RiderSavedPlaceException {
+      // Destination search remains available when saved places cannot load.
     }
   }
 
@@ -91,7 +112,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const DestinationSearchSheet(),
+      builder: (context) => DestinationSearchSheet(
+        savedPlaces: _savedPlaces,
+        showSavedPlacePrompts: widget.savedPlaceClient == null,
+      ),
     );
     if (!mounted || destination == null) {
       return;

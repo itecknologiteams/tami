@@ -16,6 +16,10 @@ import { RideChatService } from "./chat/ride-chat.service";
 import { HealthController } from "./health/health.controller";
 import { PlatformConfigController } from "./platform/platform-config.controller";
 import { PlatformConfigService } from "./platform/platform-config.service";
+import { PrismaSavedPlacesRepository } from "./places/prisma-saved-places.repository";
+import { SavedPlacesController } from "./places/saved-places.controller";
+import { SavedPlacesRepository } from "./places/saved-places.repository";
+import { SavedPlacesService } from "./places/saved-places.service";
 import { PrismaService } from "./prisma/prisma.service";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
@@ -32,6 +36,7 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     RiderProfileController,
     RideChatController,
     RiderRideQueryController,
+    SavedPlacesController,
   ],
   providers: [
     RideTransitionService,
@@ -48,6 +53,7 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     },
     BookingService,
     RideChatService,
+    SavedPlacesService,
     {
       provide: BookingRepository,
       useClass: PrismaBookingRepository,
@@ -55,6 +61,10 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     {
       provide: RideChatRepository,
       useClass: PrismaRideChatRepository,
+    },
+    {
+      provide: SavedPlacesRepository,
+      useClass: PrismaSavedPlacesRepository,
     },
   ],
 })
