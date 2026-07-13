@@ -1,15 +1,8 @@
 import { PrismaClient } from "@prisma/client";
+import { sindhCityMapProfiles } from "./city-map-profiles";
 import { seedMissingBaselineFarePolicies } from "./fare-policy-seed";
 
 const prisma = new PrismaClient();
-
-const sindhCities = [
-  { name: "Karachi", slug: "karachi" },
-  { name: "Hyderabad", slug: "hyderabad" },
-  { name: "Sukkur", slug: "sukkur" },
-  { name: "Larkana", slug: "larkana" },
-  { name: "Mirpur Khas", slug: "mirpur-khas" },
-];
 
 const rideCategories = [
   {
@@ -45,10 +38,10 @@ const rideCategories = [
 ];
 
 async function main() {
-  for (const city of sindhCities) {
+  for (const city of sindhCityMapProfiles) {
     await prisma.city.upsert({
       where: { slug: city.slug },
-      update: { name: city.name, active: true },
+      update: { ...city, active: true },
       create: city,
     });
   }
@@ -65,7 +58,7 @@ async function main() {
     });
   }
 
-  await seedMissingBaselineFarePolicies(prisma, sindhCities);
+  await seedMissingBaselineFarePolicies(prisma, sindhCityMapProfiles);
 }
 
 main()

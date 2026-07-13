@@ -31,10 +31,10 @@
 **Interfaces:**
 - Produces: active `City` records with `centerLatitude`, `centerLongitude`, `searchWest`, `searchSouth`, `searchEast`, and `searchNorth` decimal fields.
 
-- [ ] **Step 1: Write the failing seed test** asserting all five Sindh seed cities include finite centers and ordered search bounds.
-- [ ] **Step 2: Run the seed test to verify RED** with `pnpm --filter @tami/api exec vitest run prisma/seed.spec.ts`; expect failure because map profile fields do not exist.
-- [ ] **Step 3: Add the Prisma fields, SQL migration, and explicit city profiles** for Karachi, Hyderabad, Sukkur, Larkana, and Mirpur Khas.
-- [ ] **Step 4: Generate Prisma and verify GREEN** with `pnpm --filter @tami/api prisma:generate` and the focused seed test.
+- [x] **Step 1: Write the failing seed test** asserting all five Sindh seed cities include finite centers and ordered search bounds.
+- [x] **Step 2: Run the seed test to verify RED** with `pnpm --filter @tami/api exec vitest run prisma/seed.spec.ts`; expect failure because map profile fields do not exist.
+- [x] **Step 3: Add the Prisma fields, SQL migration, and explicit city profiles** for Karachi, Hyderabad, Sukkur, Larkana, and Mirpur Khas.
+- [x] **Step 4: Generate Prisma and verify GREEN** with `pnpm --filter @tami/api prisma:generate` and the focused seed test.
 - [ ] **Step 5: Commit** with `git commit -m "feat: add city map profiles"`.
 
 ### Task 2: Backend Place Search

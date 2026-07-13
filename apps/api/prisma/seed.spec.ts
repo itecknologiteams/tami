@@ -1,5 +1,29 @@
 import { describe, expect, it, vi } from "vitest";
+import { sindhCityMapProfiles } from "./city-map-profiles";
 import { seedMissingBaselineFarePolicies } from "./fare-policy-seed";
+
+describe("Sindh city map profiles", () => {
+  it("defines valid map centers and ordered search bounds for every launch city", () => {
+    expect(sindhCityMapProfiles.map((city) => city.slug)).toEqual([
+      "karachi",
+      "hyderabad",
+      "sukkur",
+      "larkana",
+      "mirpur-khas",
+    ]);
+
+    for (const city of sindhCityMapProfiles) {
+      expect(Number.isFinite(city.centerLatitude)).toBe(true);
+      expect(Number.isFinite(city.centerLongitude)).toBe(true);
+      expect(city.searchWest).toBeLessThan(city.searchEast);
+      expect(city.searchSouth).toBeLessThan(city.searchNorth);
+      expect(city.centerLongitude).toBeGreaterThanOrEqual(city.searchWest);
+      expect(city.centerLongitude).toBeLessThanOrEqual(city.searchEast);
+      expect(city.centerLatitude).toBeGreaterThanOrEqual(city.searchSouth);
+      expect(city.centerLatitude).toBeLessThanOrEqual(city.searchNorth);
+    }
+  });
+});
 
 describe("fare policy seed safety", () => {
   it("preserves an existing admin-managed policy on rerun", async () => {

@@ -67,13 +67,19 @@ enum SavedPlaceDesignation {
 }
 
 model City {
-  id        String   @id @default(cuid())
-  name      String
-  slug      String   @unique
-  province  String   @default("Sindh")
-  active    Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String
+  slug            String   @unique
+  province        String   @default("Sindh")
+  active          Boolean  @default(true)
+  centerLatitude  Decimal? @db.Decimal(9, 6)
+  centerLongitude Decimal? @db.Decimal(9, 6)
+  searchWest      Decimal? @db.Decimal(9, 6)
+  searchSouth     Decimal? @db.Decimal(9, 6)
+  searchEast      Decimal? @db.Decimal(9, 6)
+  searchNorth     Decimal? @db.Decimal(9, 6)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   zones        Zone[]
   riders       Rider[]
