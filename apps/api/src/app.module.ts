@@ -34,6 +34,9 @@ import { PricingRepository } from "./pricing/pricing.repository";
 import { PricingService } from "./pricing/pricing.service";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
+import { OsrmRoutingProvider } from "./routing/osrm-routing.provider";
+import { RoutingProvider } from "./routing/routing.provider";
+import { RoutingService } from "./routing/routing.service";
 import { RideTransitionService } from "./rides/ride-transition.service";
 import { RiderRideQueryController } from "./rides/rider-ride-query.controller";
 import { RiderRideQueryService } from "./rides/rider-ride-query.service";
@@ -69,6 +72,7 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     SavedPlacesService,
     RiderPlaceSearchService,
     PricingService,
+    RoutingService,
     {
       provide: BookingRepository,
       useClass: PrismaBookingRepository,
@@ -93,6 +97,10 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
       provide: PricingRepository,
       useClass: PrismaPricingRepository,
     },
+    {
+      provide: RoutingProvider,
+      useFactory: createRoutingProvider,
+    },
   ],
 })
 export class AppModule {}
@@ -106,4 +114,15 @@ function createGeocodingProvider(): GeocodingProvider {
     throw new Error("TAMI_MAPTILER_API_KEY is required in production");
   }
   return new DevelopmentGeocodingProvider();
+}
+
+function createRoutingProvider(): RoutingProvider {
+  const configuredBaseUrl = process.env.TAMI_ROUTING_BASE_URL?.trim();
+  if (configuredBaseUrl) {
+    return new OsrmRoutingProvider({baseUrl: configuredBaseUrl});
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("TAMI_ROUTING_BASE_URL is required in production");
+  }
+  return new OsrmRoutingProvider({baseUrl: "https://router.project-osrm.org"});
 }

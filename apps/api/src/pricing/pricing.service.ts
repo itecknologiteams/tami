@@ -6,10 +6,14 @@ import {
 import { PricingRepository } from "./pricing.repository";
 import { FareEstimate, FareEstimateRequest } from "./pricing.types";
 import { rideCategoryCodes, RideCategoryCode } from "../bookings/booking.types";
+import { RoutingService } from "../routing/routing.service";
 
 @Injectable()
 export class PricingService {
-  constructor(private readonly repository: PricingRepository) {}
+  constructor(
+    private readonly repository: PricingRepository,
+    private readonly routingService: RoutingService,
+  ) {}
 
   async estimateFare(request: FareEstimateRequest): Promise<FareEstimate> {
     this.validateCategory(request?.categoryCode);
@@ -32,15 +36,12 @@ export class PricingService {
     }
     this.validatePolicy(policy);
 
-    const directDistanceMeters = haversineMeters(
-      request.pickup.latitude,
-      request.pickup.longitude,
-      request.destination.latitude,
-      request.destination.longitude,
+    const route = await this.routingService.previewDrivingRoute(
+      request.pickup,
+      request.destination,
     );
-    const distanceMeters = Math.round(directDistanceMeters * policy.roadFactor);
-    const metersPerSecond = (policy.averageSpeedKph * 1000) / 3600;
-    const durationSeconds = Math.max(1, Math.round(distanceMeters / metersPerSecond));
+    const distanceMeters = route.distanceMeters;
+    const durationSeconds = route.durationSeconds;
     const distanceFareMinor = Math.round(
       (distanceMeters / 1000) * policy.perKilometerMinor,
     );
@@ -91,7 +92,9 @@ export class PricingService {
       policyVersion: policy.version,
       distanceMeters,
       durationSeconds,
-      routeMethod: "great_circle_road_factor_v1",
+      routeMethod: route.method,
+      routeProvider: route.provider,
+      routeCoordinates: route.coordinates,
       multiplier,
       capApplied,
       breakdown: {
@@ -197,29 +200,6 @@ export class PricingService {
       throw new Error("Active fare policy is invalid");
     }
   }
-}
-
-function haversineMeters(
-  latitude1: number,
-  longitude1: number,
-  latitude2: number,
-  longitude2: number,
-): number {
-  const earthRadiusMeters = 6371000;
-  const latitudeDelta = toRadians(latitude2 - latitude1);
-  const longitudeDelta = toRadians(longitude2 - longitude1);
-  const firstLatitude = toRadians(latitude1);
-  const secondLatitude = toRadians(latitude2);
-  const a =
-    Math.sin(latitudeDelta / 2) ** 2 +
-    Math.cos(firstLatitude) *
-      Math.cos(secondLatitude) *
-      Math.sin(longitudeDelta / 2) ** 2;
-  return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function toRadians(value: number): number {
-  return (value * Math.PI) / 180;
 }
 
 function roundMultiplier(value: number): number {

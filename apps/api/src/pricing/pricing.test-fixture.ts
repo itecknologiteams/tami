@@ -1,6 +1,7 @@
 import { InMemoryPricingRepository } from "./in-memory-pricing.repository";
 import { PricingService } from "./pricing.service";
 import { PricingPolicy } from "./pricing.types";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
 
 export function createTestPricingPolicy(
   cityId = "city_karachi",
@@ -31,5 +32,6 @@ export function createTestPricingService(
 ): PricingService {
   return new PricingService(
     new InMemoryPricingRepository([createTestPricingPolicy(cityId, id)]),
+    createTestRoutingService(),
   );
 }

@@ -3,6 +3,7 @@ import { BookingService } from "./booking.service";
 import { InMemoryBookingRepository } from "./in-memory-booking.repository";
 import { InMemoryPricingRepository } from "../pricing/in-memory-pricing.repository";
 import { PricingService } from "../pricing/pricing.service";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
 import { PricingPolicy } from "../pricing/pricing.types";
 
 const baseRequest = {
@@ -43,7 +44,10 @@ const pricingPolicy: PricingPolicy = {
 function createService(repository: InMemoryBookingRepository) {
   return new BookingService(
     repository,
-    new PricingService(new InMemoryPricingRepository([pricingPolicy])),
+    new PricingService(
+      new InMemoryPricingRepository([pricingPolicy]),
+      createTestRoutingService(),
+    ),
   );
 }
 

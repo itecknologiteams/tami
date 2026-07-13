@@ -1,4 +1,5 @@
 import { Coordinates, RideCategoryCode } from "../bookings/booking.types";
+import { RouteCoordinate } from "../routing/routing.types";
 
 export type PricingPolicy = {
   id: string;
@@ -33,7 +34,9 @@ export type FareEstimate = {
   policyVersion: number;
   distanceMeters: number;
   durationSeconds: number;
-  routeMethod: "great_circle_road_factor_v1";
+  routeMethod: "osrm_v1";
+  routeProvider: string;
+  routeCoordinates: RouteCoordinate[];
   multiplier: number;
   capApplied: boolean;
   breakdown: {

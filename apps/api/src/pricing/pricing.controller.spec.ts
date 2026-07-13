@@ -3,6 +3,7 @@ import { InMemoryPricingRepository } from "./in-memory-pricing.repository";
 import { PricingController } from "./pricing.controller";
 import { PricingService } from "./pricing.service";
 import { PricingPolicy } from "./pricing.types";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
 
 const policy: PricingPolicy = {
   id: "policy_1",
@@ -25,7 +26,10 @@ const policy: PricingPolicy = {
 describe("PricingController", () => {
   it("uses the authenticated rider city instead of request ownership fields", async () => {
     const controller = new PricingController(
-      new PricingService(new InMemoryPricingRepository([policy])),
+      new PricingService(
+        new InMemoryPricingRepository([policy]),
+        createTestRoutingService(),
+      ),
     );
 
     const estimate = await controller.estimateFare(

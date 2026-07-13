@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { InMemoryPricingRepository } from "./in-memory-pricing.repository";
 import { PricingService } from "./pricing.service";
 import { PricingPolicy } from "./pricing.types";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
+import { ProviderRoute } from "../routing/routing.types";
 
 const policy: PricingPolicy = {
   id: "policy_1",
@@ -31,7 +33,7 @@ const request = {
 
 describe("PricingService", () => {
   it("caps multipliers and the final fare using an auditable policy", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([policy]));
+    const service = createService(new InMemoryPricingRepository([policy]));
 
     const estimate = await service.estimateFare(request);
 
@@ -41,18 +43,23 @@ describe("PricingService", () => {
         currency: "PKR",
         policyId: "policy_1",
         policyVersion: 3,
-        routeMethod: "great_circle_road_factor_v1",
+        routeMethod: "osrm_v1",
+        routeProvider: "osrm-test",
+        routeCoordinates: [
+          {latitude: 0, longitude: 0},
+          {latitude: 0, longitude: 0.01},
+        ],
         multiplier: 2,
         capApplied: true,
       }),
     );
-    expect(estimate.distanceMeters).toBeGreaterThan(1100);
-    expect(estimate.durationSeconds).toBeGreaterThan(60);
+    expect(estimate.distanceMeters).toBe(6124);
+    expect(estimate.durationSeconds).toBe(931);
     expect(estimate.explanationLines).toContain("Policy version 3");
   });
 
   it("applies the minimum fare for a short trip", async () => {
-    const service = new PricingService(
+    const service = createService(
       new InMemoryPricingRepository([
         {
           ...policy,
@@ -61,6 +68,7 @@ describe("PricingService", () => {
           maximumFareMinor: null,
         },
       ]),
+      {distanceMeters: 100, durationSeconds: 30},
     );
 
     const estimate = await service.estimateFare({
@@ -74,7 +82,7 @@ describe("PricingService", () => {
   });
 
   it("rejects malformed coordinates, addresses, and identical points", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([policy]));
+    const service = createService(new InMemoryPricingRepository([policy]));
 
     await expect(
       service.estimateFare({...request, pickup: {...request.pickup, latitude: 91}}),
@@ -88,7 +96,7 @@ describe("PricingService", () => {
   });
 
   it("rejects missing and unsupported category values at the service boundary", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([policy]));
+    const service = createService(new InMemoryPricingRepository([policy]));
 
     await expect(
       service.estimateFare({...request, categoryCode: undefined} as never),
@@ -99,7 +107,7 @@ describe("PricingService", () => {
   });
 
   it("validates matching scheduled category and timestamp before pricing", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([policy]));
+    const service = createService(new InMemoryPricingRepository([policy]));
     const scheduledPickupAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
 
     await expect(
@@ -111,7 +119,7 @@ describe("PricingService", () => {
   });
 
   it("rejects non-string scheduled pickup values before parsing", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([policy]));
+    const service = createService(new InMemoryPricingRepository([policy]));
 
     await expect(
       service.estimateFare({
@@ -125,7 +133,7 @@ describe("PricingService", () => {
   });
 
   it("rejects invalid loaded fare policy values before calculating", async () => {
-    const service = new PricingService(
+    const service = createService(
       new InMemoryPricingRepository([{...policy, maximumFareMinor: 10_000}]),
     );
 
@@ -135,10 +143,17 @@ describe("PricingService", () => {
   });
 
   it("fails when the rider city has no active category policy", async () => {
-    const service = new PricingService(new InMemoryPricingRepository([]));
+    const service = createService(new InMemoryPricingRepository([]));
 
     await expect(service.estimateFare(request)).rejects.toBeInstanceOf(
       NotFoundException,
     );
   });
 });
+
+function createService(
+  repository: InMemoryPricingRepository,
+  route: Partial<ProviderRoute> = {},
+): PricingService {
+  return new PricingService(repository, createTestRoutingService(route));
+}

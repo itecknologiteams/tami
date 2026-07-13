@@ -6,6 +6,7 @@ import { PrismaBookingRepository } from "../bookings/prisma-booking.repository";
 import { createIntegrationFarePolicy } from "../pricing/pricing.integration-fixture";
 import { PrismaPricingRepository } from "../pricing/prisma-pricing.repository";
 import { PricingService } from "../pricing/pricing.service";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
 import { AuthService } from "./auth.service";
 import { DevelopmentOtpStore } from "./development-otp-store";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
@@ -19,6 +20,13 @@ describeDatabase("rider authentication integration", () => {
   let cityId: string;
   let riderId: string;
   let farePolicyId: string;
+  const phoneSuffix = suffix
+    .replaceAll("-", "")
+    .slice(0, 7)
+    .split("")
+    .map((character) => Number.parseInt(character, 16) % 10)
+    .join("");
+  const phone = `+92300${phoneSuffix}`;
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -52,7 +60,7 @@ describeDatabase("rider authentication integration", () => {
       new PrismaAuthRepository(prisma as never),
       new DevelopmentOtpStore(),
     );
-    const challenge = await authService.requestOtp("+923001234567");
+    const challenge = await authService.requestOtp(phone);
     const session = await authService.verifyRider({
       challengeId: challenge.challengeId,
       code: challenge.developmentCode,
@@ -65,7 +73,10 @@ describeDatabase("rider authentication integration", () => {
     );
     const ride = await new BookingService(
       new PrismaBookingRepository(prisma as never),
-      new PricingService(new PrismaPricingRepository(prisma as never)),
+      new PricingService(
+        new PrismaPricingRepository(prisma as never),
+        createTestRoutingService(),
+      ),
     ).createRide({
       cityId: authenticatedRider.cityId,
       riderId: authenticatedRider.id,

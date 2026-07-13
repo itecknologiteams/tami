@@ -62,7 +62,7 @@
 - [x] **Step 5: Write failing service/controller tests** for two-character query validation, rider-city scoping, out-of-bounds reverse lookup, auth guard metadata, and stable result mapping.
 - [x] **Step 6: Implement the city repository query, service, controller, and Nest registration** without accepting a client city ID.
 - [x] **Step 7: Run all place/API tests and typecheck** with `pnpm --filter @tami/api test` and `pnpm --filter @tami/api typecheck`.
-- [ ] **Step 8: Commit** with `git commit -m "feat: add rider place search"`.
+- [x] **Step 8: Commit** with `git commit -m "feat: add rider place search"`.
 
 ### Task 3: OSRM Routing and Fare Geometry
 
@@ -84,13 +84,13 @@
 - Changes: `FareEstimate.routeMethod` to `'osrm_v1'` and adds `routeCoordinates` plus `routeProvider`.
 - Consumes: `RoutingService.previewDrivingRoute(pickup, destination)` from `PricingService.estimateFare`.
 
-- [ ] **Step 1: Write failing OSRM provider tests** for `route/v1/driving/{lon},{lat};{lon},{lat}`, `overview=full`, `geometries=geojson`, timeouts, no-route responses, and malformed geometry.
-- [ ] **Step 2: Run the provider test to verify RED**.
-- [ ] **Step 3: Implement the provider and routing service** with finite coordinate validation, at least two route points, and explicit provider/method metadata.
-- [ ] **Step 4: Run routing tests to verify GREEN**.
-- [ ] **Step 5: Update pricing tests first** to expect OSRM metrics and geometry, then run them to verify RED against the great-circle implementation.
-- [ ] **Step 6: Inject `RoutingService` into `PricingService` and calculate fare from route distance/duration** while preserving policy caps, multipliers, and explanation lines.
-- [ ] **Step 7: Run pricing, booking, controller, and API suites to verify GREEN**.
+- [x] **Step 1: Write failing OSRM provider tests** for `route/v1/driving/{lon},{lat};{lon},{lat}`, `overview=full`, `geometries=geojson`, timeouts, no-route responses, and malformed geometry.
+- [x] **Step 2: Run the provider test to verify RED**.
+- [x] **Step 3: Implement the provider and routing service** with finite coordinate validation, at least two route points, and explicit provider/method metadata.
+- [x] **Step 4: Run routing tests to verify GREEN**.
+- [x] **Step 5: Update pricing tests first** to expect OSRM metrics and geometry, then run them to verify RED against the great-circle implementation.
+- [x] **Step 6: Inject `RoutingService` into `PricingService` and calculate fare from route distance/duration** while preserving policy caps, multipliers, and explanation lines.
+- [x] **Step 7: Run pricing, booking, controller, and API suites to verify GREEN**.
 - [ ] **Step 8: Commit** with `git commit -m "feat: route rider fares with osrm"`.
 
 ### Task 4: Flutter Device Location

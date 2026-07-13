@@ -6,6 +6,7 @@ import { PrismaBookingRepository } from "./prisma-booking.repository";
 import { createIntegrationFarePolicy } from "../pricing/pricing.integration-fixture";
 import { PrismaPricingRepository } from "../pricing/prisma-pricing.repository";
 import { PricingService } from "../pricing/pricing.service";
+import { createTestRoutingService } from "../routing/routing.test-fixture";
 
 const describeDatabase =
   process.env.RUN_DATABASE_TESTS === "true" ? describe : describe.skip;
@@ -60,7 +61,10 @@ describeDatabase("PrismaBookingRepository integration", () => {
   it("persists fare audit fields, requested transition, and pending payment", async () => {
     const service = new BookingService(
       new PrismaBookingRepository(prisma as never),
-      new PricingService(new PrismaPricingRepository(prisma as never)),
+      new PricingService(
+        new PrismaPricingRepository(prisma as never),
+        createTestRoutingService(),
+      ),
     );
 
     const ride = await service.createRide({
