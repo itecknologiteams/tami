@@ -118,7 +118,7 @@
 - [x] **Step 4: Add Android coarse/fine location permissions and the iOS when-in-use purpose string**.
 - [x] **Step 5: Thread the injectable location client from `TamiMobileApp` through onboarding and shell**.
 - [x] **Step 6: Run focused tests and `flutter analyze` to verify GREEN**.
-- [ ] **Step 7: Commit** with `git commit -m "feat: add rider device location"`.
+- [x] **Step 7: Commit** with `git commit -m "feat: add rider device location"`.
 
 ### Task 5: Flutter Place Search Client and Sheet
 
@@ -136,13 +136,13 @@
 - Produces: reusable `RiderPlaceSearchSheet(mode: pickup|destination, ...)` returning `TamiPlace`.
 - Consumes: authenticated access token, current pickup proximity, saved places, and backend place endpoints.
 
-- [ ] **Step 1: Write failing HTTP client tests** for encoded query/proximity parameters, bearer auth, reverse lookup, response parsing, and stable API errors.
-- [ ] **Step 2: Run focused client tests to verify RED**.
-- [ ] **Step 3: Implement the HTTP client and app dependency wiring**.
-- [ ] **Step 4: Run client tests to verify GREEN**.
-- [ ] **Step 5: Write failing widget tests** for two-character minimum, 350 ms debounce, stale response suppression, loading, empty, retry, saved places, and pickup/destination titles.
-- [ ] **Step 6: Replace `_destinationOptions` with the reusable provider-backed sheet**.
-- [ ] **Step 7: Run focused widget tests and analyze to verify GREEN**.
+- [x] **Step 1: Write failing HTTP client tests** for encoded query/proximity parameters, bearer auth, reverse lookup, response parsing, and stable API errors.
+- [x] **Step 2: Run focused client tests to verify RED**.
+- [x] **Step 3: Implement the HTTP client and app dependency wiring**.
+- [x] **Step 4: Run client tests to verify GREEN**.
+- [x] **Step 5: Write failing widget tests** for two-character minimum, 350 ms debounce, stale response suppression, loading, empty, retry, saved places, and pickup/destination titles.
+- [x] **Step 6: Replace `_destinationOptions` with the reusable provider-backed sheet**.
+- [x] **Step 7: Run focused widget tests and analyze to verify GREEN**.
 - [ ] **Step 8: Commit** with `git commit -m "feat: add live rider place search"`.
 
 ### Task 6: Rider Pickup Orchestration

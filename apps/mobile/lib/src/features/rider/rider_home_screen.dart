@@ -15,6 +15,7 @@ import 'rider_chat_client.dart';
 import 'rider_ride_query_client.dart';
 import 'rider_saved_place_client.dart';
 import 'rider_pricing_client.dart';
+import 'rider_place_search_client.dart';
 
 export 'booking/tami_place.dart';
 
@@ -27,6 +28,7 @@ class RiderHomeScreen extends StatefulWidget {
     this.rideQueryClient,
     this.savedPlaceClient,
     this.pricingClient,
+    this.placeSearchClient,
     this.initialRide,
     this.initialDestination,
     super.key,
@@ -39,6 +41,7 @@ class RiderHomeScreen extends StatefulWidget {
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
   final RiderPricingClient? pricingClient;
+  final RiderPlaceSearchClient? placeSearchClient;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
 
@@ -115,13 +118,25 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   }
 
   Future<void> _openDestinationSearch() async {
+    final placeSearchClient = widget.placeSearchClient;
+    final accessToken = widget.session?.accessToken;
+    if (placeSearchClient == null || accessToken == null) {
+      return;
+    }
     final destination = await showModalBottomSheet<TamiPlace>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DestinationSearchSheet(
+      builder: (context) => RiderPlaceSearchSheet(
+        mode: RiderPlaceSearchMode.destination,
+        accessToken: accessToken,
+        searchClient: placeSearchClient,
         savedPlaces: _savedPlaces,
         showSavedPlacePrompts: widget.savedPlaceClient == null,
+        proximity: RiderPlaceProximity(
+          latitude: _pickup.latitude,
+          longitude: _pickup.longitude,
+        ),
       ),
     );
     if (!mounted || destination == null) {

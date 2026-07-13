@@ -8,6 +8,7 @@ import '../features/rider/rider_chat_client.dart';
 import '../features/rider/rider_ride_query_client.dart';
 import '../features/rider/rider_saved_place_client.dart';
 import '../features/rider/rider_pricing_client.dart';
+import '../features/rider/rider_place_search_client.dart';
 import '../location/geolocator_rider_location_client.dart';
 import '../location/rider_location_client.dart';
 import '../ui/tami_theme.dart';
@@ -24,6 +25,7 @@ class TamiMobileApp extends StatelessWidget {
     this.riderSavedPlaceClient,
     this.riderPricingClient,
     this.riderLocationClient,
+    this.riderPlaceSearchClient,
     super.key,
   });
 
@@ -35,6 +37,7 @@ class TamiMobileApp extends StatelessWidget {
   final RiderSavedPlaceClient? riderSavedPlaceClient;
   final RiderPricingClient? riderPricingClient;
   final RiderLocationClient? riderLocationClient;
+  final RiderPlaceSearchClient? riderPlaceSearchClient;
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +66,9 @@ class TamiMobileApp extends StatelessWidget {
               HttpRiderPricingClient(baseUrl: _apiBaseUrl),
           locationClient:
               riderLocationClient ?? GeolocatorRiderLocationClient(),
+          placeSearchClient:
+              riderPlaceSearchClient ??
+              HttpRiderPlaceSearchClient(baseUrl: _apiBaseUrl),
         ),
         TamiAppMode.driver => const DriverHomeScreen(),
       },

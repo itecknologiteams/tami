@@ -7,6 +7,7 @@ import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
 import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_saved_place_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_pricing_client.dart';
+import 'package:tami_mobile/src/features/rider/rider_place_search_client.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 
 void main() {
@@ -16,6 +17,7 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           savedPlaceClient: _HomePlaceClient(),
+          placeSearchClient: const _PlaceSearchClient(),
         ),
       ),
     );
@@ -28,7 +30,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Choose a ride'), findsOneWidget);
-    expect(find.byKey(const Key('destination-search-glass')), findsNothing);
+    expect(find.byKey(const Key('place-search-glass')), findsNothing);
     expect(find.text('PECHS, Karachi'), findsOneWidget);
   });
   testWidgets('restores the current ride from the server', (tester) async {
@@ -72,7 +74,14 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          placeSearchClient: _PlaceSearchClient(),
+        ),
+      ),
+    );
 
     expect(
       tester.getSize(find.byKey(const Key('rider-booking-glass'))).width,
@@ -83,7 +92,14 @@ void main() {
   testWidgets('opens a destination search from the map booking surface', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          placeSearchClient: _PlaceSearchClient(),
+        ),
+      ),
+    );
 
     expect(find.byKey(const Key('rider-map')), findsOneWidget);
     expect(find.byKey(const Key('rider-city-glass')), findsOneWidget);
@@ -96,8 +112,8 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Choose destination'), findsOneWidget);
-    expect(find.byKey(const Key('destination-search-glass')), findsOneWidget);
-    expect(find.byKey(const Key('destination-search')), findsOneWidget);
+    expect(find.byKey(const Key('place-search-glass')), findsOneWidget);
+    expect(find.byKey(const Key('place-search')), findsOneWidget);
     expect(find.text('Home'), findsOneWidget);
     expect(find.text('Work'), findsOneWidget);
   });
@@ -105,14 +121,22 @@ void main() {
   testWidgets('shows ride choices after a destination is selected', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          placeSearchClient: _PlaceSearchClient(),
+        ),
+      ),
+    );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('destination-search')),
+      find.byKey(const Key('place-search')),
       'Mazar',
     );
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -144,6 +168,7 @@ void main() {
           ),
           bookingClient: bookingClient,
           pricingClient: _PricingClient(),
+          placeSearchClient: const _PlaceSearchClient(),
         ),
       ),
     );
@@ -151,9 +176,10 @@ void main() {
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('destination-search')),
+      find.byKey(const Key('place-search')),
       'Mazar',
     );
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -179,6 +205,7 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           pricingClient: _PricingClient(),
+          placeSearchClient: const _PlaceSearchClient(),
         ),
       ),
     );
@@ -186,9 +213,10 @@ void main() {
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('destination-search')),
+      find.byKey(const Key('place-search')),
       'Mazar',
     );
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -205,6 +233,7 @@ void main() {
         home: RiderHomeScreen(
           session: _session,
           pricingClient: _FailingPricingClient(),
+          placeSearchClient: const _PlaceSearchClient(),
         ),
       ),
     );
@@ -212,9 +241,10 @@ void main() {
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('destination-search')),
+      find.byKey(const Key('place-search')),
       'Mazar',
     );
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -247,6 +277,7 @@ void main() {
           ),
           bookingClient: bookingClient,
           pricingClient: _PricingClient(),
+          placeSearchClient: const _PlaceSearchClient(),
         ),
       ),
     );
@@ -340,14 +371,22 @@ void main() {
   testWidgets('offers a date and time picker for scheduled rides', (
     tester,
   ) async {
-    await tester.pumpWidget(const MaterialApp(home: RiderHomeScreen()));
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          placeSearchClient: _PlaceSearchClient(),
+        ),
+      ),
+    );
 
     await tester.tap(find.text('Where to?'));
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.byKey(const Key('destination-search')),
+      find.byKey(const Key('place-search')),
       'Mazar',
     );
+    await tester.pump(const Duration(milliseconds: 350));
     await tester.pump();
     await tester.tap(find.text('Mazar-e-Quaid'));
     await tester.pumpAndSettle();
@@ -373,7 +412,8 @@ const _session = RiderSession(
 Future<void> _requestMazarRide(WidgetTester tester) async {
   await tester.tap(find.text('Where to?'));
   await tester.pumpAndSettle();
-  await tester.enterText(find.byKey(const Key('destination-search')), 'Mazar');
+  await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
+  await tester.pump(const Duration(milliseconds: 350));
   await tester.pump();
   await tester.tap(find.text('Mazar-e-Quaid'));
   await tester.pumpAndSettle();
@@ -539,4 +579,41 @@ class _HomePlaceClient implements RiderSavedPlaceClient {
     required SaveRiderPlaceRequest request,
     String? placeId,
   }) => throw UnimplementedError();
+}
+
+class _PlaceSearchClient implements RiderPlaceSearchClient {
+  const _PlaceSearchClient();
+
+  @override
+  Future<TamiPlace> reverse({
+    required String accessToken,
+    required double latitude,
+    required double longitude,
+  }) async => TamiPlace(
+    name: 'Current location',
+    address: 'Current location',
+    latitude: latitude,
+    longitude: longitude,
+  );
+
+  @override
+  Future<List<TamiPlace>> search({
+    required String accessToken,
+    required String query,
+    RiderPlaceProximity? proximity,
+  }) async {
+    if (!'Mazar-e-Quaid'.toLowerCase().contains(query.toLowerCase())) {
+      return const [];
+    }
+    return const [
+      TamiPlace(
+        id: 'karachi-mazar',
+        cityId: 'city_karachi',
+        name: 'Mazar-e-Quaid',
+        address: 'Mazar-e-Quaid, Karachi',
+        latitude: 24.8753,
+        longitude: 67.0407,
+      ),
+    ];
+  }
 }

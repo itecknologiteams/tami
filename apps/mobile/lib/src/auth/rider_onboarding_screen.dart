@@ -6,6 +6,7 @@ import '../features/rider/rider_shell.dart';
 import '../features/rider/rider_ride_query_client.dart';
 import '../features/rider/rider_saved_place_client.dart';
 import '../features/rider/rider_pricing_client.dart';
+import '../features/rider/rider_place_search_client.dart';
 import '../location/rider_location_client.dart';
 import '../ui/tami_colors.dart';
 import '../ui/tami_glass.dart';
@@ -22,6 +23,7 @@ class RiderOnboardingScreen extends StatefulWidget {
     this.savedPlaceClient,
     this.pricingClient,
     this.locationClient,
+    this.placeSearchClient,
     super.key,
   });
 
@@ -32,6 +34,7 @@ class RiderOnboardingScreen extends StatefulWidget {
   final RiderSavedPlaceClient? savedPlaceClient;
   final RiderPricingClient? pricingClient;
   final RiderLocationClient? locationClient;
+  final RiderPlaceSearchClient? placeSearchClient;
 
   @override
   State<RiderOnboardingScreen> createState() => _RiderOnboardingScreenState();
@@ -130,6 +133,7 @@ class _RiderOnboardingScreenState extends State<RiderOnboardingScreen> {
             savedPlaceClient: widget.savedPlaceClient,
             pricingClient: widget.pricingClient,
             locationClient: widget.locationClient,
+            placeSearchClient: widget.placeSearchClient,
           ),
         ),
       );
