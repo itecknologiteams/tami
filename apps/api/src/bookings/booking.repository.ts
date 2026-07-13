@@ -7,6 +7,11 @@ import {
 } from "./booking.types";
 
 export abstract class BookingRepository {
+  abstract findRideByIdempotencyKey(
+    riderId: string,
+    idempotencyKey: string,
+  ): Promise<BookingRide | null>;
+
   abstract createRideWithInitialTransition(
     request: PersistRideForRiderRequest,
     requestedAt: string,

@@ -234,6 +234,7 @@ model FarePolicyCategoryRate {
 
 model Ride {
   id                   String    @id @default(cuid())
+  idempotencyKey       String?
   cityId               String
   zoneId               String?
   riderId              String
@@ -270,6 +271,8 @@ model Ride {
   payments     PaymentRecord[]
   chatMessages ChatMessage[]
   farePolicy   FarePolicy?           @relation(fields: [farePolicyId], references: [id], onDelete: SetNull)
+
+  @@unique([riderId, idempotencyKey])
 }
 
 model ChatMessage {

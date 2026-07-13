@@ -16,8 +16,18 @@ export class BookingService {
   ) {}
 
   async createRide(request: CreateRideForRiderRequest): Promise<BookingRide> {
+    if (!idempotencyKeyPattern.test(request.idempotencyKey)) {
+      throw new BadRequestException("Idempotency key is invalid");
+    }
     if (!paymentMethods.has(request.paymentMethod)) {
       throw new BadRequestException("Payment method is invalid");
+    }
+    const existingRide = await this.bookingRepository.findRideByIdempotencyKey(
+      request.riderId,
+      request.idempotencyKey,
+    );
+    if (existingRide != null) {
+      return existingRide;
     }
     const estimate = await this.pricingService.estimateFare({
       cityId: request.cityId,
@@ -82,3 +92,5 @@ const paymentMethods = new Set<RiderPaymentMethod>([
   "easypaisa",
   "nayapay",
 ]);
+
+const idempotencyKeyPattern = /^[A-Za-z0-9_-]{16,128}$/;

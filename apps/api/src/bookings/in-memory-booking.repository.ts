@@ -10,10 +10,14 @@ import {
   terminalRideStates,
 } from "./booking.types";
 
-type InMemoryRideRequest = Omit<CreateRideForRiderRequest, "paymentMethod"> &
+type InMemoryRideRequest = Omit<
+  CreateRideForRiderRequest,
+  "paymentMethod" | "idempotencyKey"
+> &
   Partial<
     Pick<
       PersistRideForRiderRequest,
+      | "idempotencyKey"
       | "paymentMethod"
       | "estimatedFareMinor"
       | "currency"
@@ -29,6 +33,14 @@ export class InMemoryBookingRepository extends BookingRepository {
   readonly rides: BookingRide[] = [];
   readonly transitions: BookingRideTransition[] = [];
   readonly payments: BookingPayment[] = [];
+  private readonly idempotentRides = new Map<string, BookingRide>();
+
+  async findRideByIdempotencyKey(
+    riderId: string,
+    idempotencyKey: string,
+  ): Promise<BookingRide | null> {
+    return this.idempotentRides.get(`${riderId}:${idempotencyKey}`) ?? null;
+  }
 
   async createRideWithInitialTransition(
     request: InMemoryRideRequest,
@@ -67,6 +79,10 @@ export class InMemoryBookingRepository extends BookingRepository {
       amountMinor: request.estimatedFareMinor ?? 0,
       currency: request.currency ?? "PKR",
     });
+    this.idempotentRides.set(
+      `${request.riderId}:${request.idempotencyKey ?? ride.id}`,
+      ride,
+    );
 
     return ride;
   }

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../../../ui/tami_colors.dart';
@@ -14,12 +16,14 @@ class RideSelection {
     required this.categoryCode,
     required this.paymentMethod,
     required this.scheduledPickupAt,
+    required this.idempotencyKey,
   });
 
   final TamiPlace destination;
   final String categoryCode;
   final RiderPaymentMethod paymentMethod;
   final DateTime? scheduledPickupAt;
+  final String idempotencyKey;
 }
 
 class RideOptionsSheet extends StatefulWidget {
@@ -55,10 +59,12 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
   bool _isEstimating = false;
   String? _estimateError;
   int _estimateRequest = 0;
+  late String _idempotencyKey;
 
   @override
   void initState() {
     super.initState();
+    _idempotencyKey = _newIdempotencyKey();
     _loadEstimate();
   }
 
@@ -121,6 +127,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
               : _categoryCode(_category),
           paymentMethod: _paymentMethod,
           scheduledPickupAt: _isScheduled ? _scheduledPickupAt : null,
+          idempotencyKey: _idempotencyKey,
         ),
       );
       if (mounted) {
@@ -169,6 +176,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
         time.hour,
         time.minute,
       );
+      _idempotencyKey = _newIdempotencyKey();
     });
     _loadEstimate();
   }
@@ -229,7 +237,10 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                             label: Text(_categoryLabel(category)),
                             selected: _category == category,
                             onSelected: (_) {
-                              setState(() => _category = category);
+                              setState(() {
+                                _category = category;
+                                _idempotencyKey = _newIdempotencyKey();
+                              });
                               _loadEstimate();
                             },
                           ),
@@ -251,6 +262,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                             const Duration(hours: 1),
                           );
                         }
+                        _idempotencyKey = _newIdempotencyKey();
                       });
                       _loadEstimate();
                     },
@@ -286,7 +298,10 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                         .toList(),
                     onChanged: (value) {
                       if (value != null) {
-                        setState(() => _paymentMethod = value);
+                        setState(() {
+                          _paymentMethod = value;
+                          _idempotencyKey = _newIdempotencyKey();
+                        });
                       }
                     },
                   ),
@@ -414,5 +429,14 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
       RiderPaymentMethod.easypaisa => 'Easypaisa',
       RiderPaymentMethod.nayapay => 'NayaPay',
     };
+  }
+
+  String _newIdempotencyKey() {
+    final random = Random.secure();
+    final suffix = List<int>.generate(
+      16,
+      (_) => random.nextInt(256),
+    ).map((value) => value.toRadixString(16).padLeft(2, '0')).join();
+    return 'rider_${DateTime.now().microsecondsSinceEpoch}_$suffix';
   }
 }

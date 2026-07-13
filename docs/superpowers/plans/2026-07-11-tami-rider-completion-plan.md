@@ -81,7 +81,8 @@
 - [x] Add rider city context based on profile and selected city; remove hardcoded Karachi copy and coordinates.
 - [ ] Load active categories and availability rules from the API.
 - [x] Load server fare estimate after pickup, destination, category, and schedule changes; show a policy explanation and payment method.
-- [ ] Implement immediate and scheduled confirmation summaries, schedule validation, request idempotency, and clear failure/retry states.
+- [x] Add stable rider request keys, API validation, and a database uniqueness constraint so sequential and concurrent booking retries return one ride.
+- [ ] Complete immediate and scheduled confirmation summaries, client-side schedule validation, and explicit network failure/retry states.
 - [ ] Persist successful booking and switch directly to the restored current-ride view.
 
 **Acceptance:** A signed-in rider can choose a valid pickup/destination, choose a category/payment/schedule, see a server fare, create an idempotent ride, and recover the ride after app restart.

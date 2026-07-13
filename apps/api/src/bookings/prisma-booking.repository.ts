@@ -65,61 +65,89 @@ export class PrismaBookingRepository extends BookingRepository {
     super();
   }
 
+  async findRideByIdempotencyKey(
+    riderId: string,
+    idempotencyKey: string,
+  ): Promise<BookingRide | null> {
+    const ride = await this.prisma.ride.findUnique({
+      where: {riderId_idempotencyKey: {riderId, idempotencyKey}},
+      include: rideInclude,
+    });
+    return ride == null ? null : toBookingRide(ride);
+  }
+
   async createRideWithInitialTransition(
     request: PersistRideForRiderRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
-    return this.prisma.$transaction(async (transaction) => {
-      const ride = await transaction.ride.create({
-        data: {
-          city: { connect: { id: request.cityId } },
-          rider: { connect: { id: request.riderId } },
-          category: { connect: { code: request.categoryCode } },
-          state: "requested",
-          pickupLatitude: request.pickup.latitude,
-          pickupLongitude: request.pickup.longitude,
-          pickupAddress: request.pickup.address,
-          destinationLatitude: request.destination.latitude,
-          destinationLongitude: request.destination.longitude,
-          destinationAddress: request.destination.address,
-          scheduledPickupAt: request.scheduledPickupAt
-            ? new Date(request.scheduledPickupAt)
-            : null,
-          estimatedFareMinor: request.estimatedFareMinor,
-          currency: request.currency,
-          farePolicy: { connect: { id: request.farePolicyId } },
-          farePolicyVersion: request.farePolicyVersion,
-          fareMultiplier: request.fareMultiplier,
-          routeDistanceMeters: request.routeDistanceMeters,
-          routeDurationSeconds: request.routeDurationSeconds,
-          requestedAt: new Date(requestedAt),
-        },
-        include: rideInclude,
-      });
+    try {
+      return await this.prisma.$transaction(async (transaction) => {
+        const ride = await transaction.ride.create({
+          data: {
+            idempotencyKey: request.idempotencyKey,
+            city: { connect: { id: request.cityId } },
+            rider: { connect: { id: request.riderId } },
+            category: { connect: { code: request.categoryCode } },
+            state: "requested",
+            pickupLatitude: request.pickup.latitude,
+            pickupLongitude: request.pickup.longitude,
+            pickupAddress: request.pickup.address,
+            destinationLatitude: request.destination.latitude,
+            destinationLongitude: request.destination.longitude,
+            destinationAddress: request.destination.address,
+            scheduledPickupAt: request.scheduledPickupAt
+              ? new Date(request.scheduledPickupAt)
+              : null,
+            estimatedFareMinor: request.estimatedFareMinor,
+            currency: request.currency,
+            farePolicy: { connect: { id: request.farePolicyId } },
+            farePolicyVersion: request.farePolicyVersion,
+            fareMultiplier: request.fareMultiplier,
+            routeDistanceMeters: request.routeDistanceMeters,
+            routeDurationSeconds: request.routeDurationSeconds,
+            requestedAt: new Date(requestedAt),
+          },
+          include: rideInclude,
+        });
 
-      await transaction.rideStateTransition.create({
-        data: {
-          rideId: ride.id,
-          fromState: null,
-          toState: "requested",
-          actorType: "rider",
-          actorId: request.riderId,
-          occurredAt: new Date(requestedAt),
-        },
-      });
+        await transaction.rideStateTransition.create({
+          data: {
+            rideId: ride.id,
+            fromState: null,
+            toState: "requested",
+            actorType: "rider",
+            actorId: request.riderId,
+            occurredAt: new Date(requestedAt),
+          },
+        });
 
-      await transaction.paymentRecord.create({
-        data: {
-          rideId: ride.id,
-          method: request.paymentMethod,
-          status: "pending",
-          amountMinor: request.estimatedFareMinor,
-          currency: request.currency,
-        },
-      });
+        await transaction.paymentRecord.create({
+          data: {
+            rideId: ride.id,
+            method: request.paymentMethod,
+            status: "pending",
+            amountMinor: request.estimatedFareMinor,
+            currency: request.currency,
+          },
+        });
 
-      return toBookingRide(ride, request.paymentMethod);
-    });
+        return toBookingRide(ride, request.paymentMethod);
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existing = await this.findRideByIdempotencyKey(
+          request.riderId,
+          request.idempotencyKey,
+        );
+        if (existing != null) {
+          return existing;
+        }
+      }
+      throw error;
+    }
   }
 
   async recordTransition(

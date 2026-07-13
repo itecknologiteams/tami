@@ -326,6 +326,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
 
     final ride = await bookingClient.createRide(
       accessToken: session.accessToken,
+      idempotencyKey: selection.idempotencyKey,
       request: CreateRiderRideRequest(
         categoryCode: selection.categoryCode,
         pickup: RiderCoordinates(

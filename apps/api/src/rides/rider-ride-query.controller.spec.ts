@@ -19,6 +19,7 @@ describe("RiderRideQueryController", () => {
     const ride = await booking.createRide({
       cityId: rider.cityId,
       riderId: rider.id,
+      idempotencyKey: "ride_query_request_0001",
       categoryCode: "standard_taxi",
       paymentMethod: "cash",
       pickup: {latitude: 24.86, longitude: 67.01, address: "Pickup"},

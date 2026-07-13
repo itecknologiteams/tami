@@ -33,6 +33,7 @@ describe("BookingController", () => {
           address: "Mazar-e-Quaid, Karachi",
         },
       },
+      "controller_request_0001",
     );
 
     expect(ride).toEqual(
@@ -59,20 +60,24 @@ describe("BookingController", () => {
       cityId: "city_karachi",
       phone: "+923001234567",
     };
-    const ride = await controller.createRide(rider, {
-      categoryCode: "standard_taxi",
-      paymentMethod: "cash",
-      pickup: {
-        latitude: 24.8607,
-        longitude: 67.0011,
-        address: "Frere Hall, Karachi",
+    const ride = await controller.createRide(
+      rider,
+      {
+        categoryCode: "standard_taxi",
+        paymentMethod: "cash",
+        pickup: {
+          latitude: 24.8607,
+          longitude: 67.0011,
+          address: "Frere Hall, Karachi",
+        },
+        destination: {
+          latitude: 24.8425,
+          longitude: 67.05,
+          address: "Mazar-e-Quaid, Karachi",
+        },
       },
-      destination: {
-        latitude: 24.8425,
-        longitude: 67.05,
-        address: "Mazar-e-Quaid, Karachi",
-      },
-    });
+      "controller_request_0002",
+    );
 
     const cancelled = await controller.cancelRide(rider, ride.id);
 
@@ -91,20 +96,24 @@ describe("BookingController", () => {
       cityId: "city_karachi",
       phone: "+923001234567",
     };
-    const ride = await controller.createRide(rider, {
-      categoryCode: "standard_taxi",
-      paymentMethod: "cash",
-      pickup: {
-        latitude: 24.8607,
-        longitude: 67.0011,
-        address: "Frere Hall, Karachi",
+    const ride = await controller.createRide(
+      rider,
+      {
+        categoryCode: "standard_taxi",
+        paymentMethod: "cash",
+        pickup: {
+          latitude: 24.8607,
+          longitude: 67.0011,
+          address: "Frere Hall, Karachi",
+        },
+        destination: {
+          latitude: 24.8425,
+          longitude: 67.05,
+          address: "Mazar-e-Quaid, Karachi",
+        },
       },
-      destination: {
-        latitude: 24.8425,
-        longitude: 67.05,
-        address: "Mazar-e-Quaid, Karachi",
-      },
-    });
+      "controller_request_0003",
+    );
 
     await expect(
       controller.cancelRide({...rider, id: "rider_other"}, ride.id),

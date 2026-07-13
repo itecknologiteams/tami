@@ -40,6 +40,7 @@ export type PersistRideForRiderRequest = CreateRideForRiderRequest & {
 export type CreateRideForRiderRequest = CreateRideRequest & {
   cityId: string;
   riderId: string;
+  idempotencyKey: string;
 };
 
 export type BookingRide = {

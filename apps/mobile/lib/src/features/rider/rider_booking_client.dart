@@ -94,6 +94,7 @@ class RiderBookingRide {
 abstract class RiderBookingClient {
   Future<RiderBookingRide> createRide({
     required String accessToken,
+    required String idempotencyKey,
     required CreateRiderRideRequest request,
   });
 
@@ -122,6 +123,7 @@ class HttpRiderBookingClient implements RiderBookingClient {
   @override
   Future<RiderBookingRide> createRide({
     required String accessToken,
+    required String idempotencyKey,
     required CreateRiderRideRequest request,
   }) async {
     final response = await _client.post(
@@ -129,6 +131,7 @@ class HttpRiderBookingClient implements RiderBookingClient {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $accessToken',
+        'Idempotency-Key': idempotencyKey,
       },
       body: jsonEncode(request.toJson()),
     );

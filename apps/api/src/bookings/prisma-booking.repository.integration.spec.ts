@@ -67,11 +67,12 @@ describeDatabase("PrismaBookingRepository integration", () => {
       ),
     );
 
-    const ride = await service.createRide({
+    const request = {
       cityId,
       riderId,
-      categoryCode: "standard_taxi",
-      paymentMethod: "cash",
+      idempotencyKey: "prisma_integration_request_01",
+      categoryCode: "standard_taxi" as const,
+      paymentMethod: "cash" as const,
       pickup: {
         latitude: 24.8607,
         longitude: 67.0011,
@@ -82,7 +83,9 @@ describeDatabase("PrismaBookingRepository integration", () => {
         longitude: 67.05,
         address: "Mazar-e-Quaid, Karachi",
       },
-    });
+    };
+    const ride = await service.createRide(request);
+    const retriedRide = await service.createRide(request);
 
     const storedRide = await prisma.ride.findUniqueOrThrow({
       where: { id: ride.id },
@@ -90,6 +93,7 @@ describeDatabase("PrismaBookingRepository integration", () => {
     });
 
     expect(storedRide.state).toBe("requested");
+    expect(retriedRide.id).toBe(ride.id);
     expect(storedRide.category.code).toBe("standard_taxi");
     expect(storedRide.pickupLatitude.toNumber()).toBe(24.8607);
     expect(storedRide.destinationLongitude.toNumber()).toBe(67.05);
@@ -116,6 +120,18 @@ describeDatabase("PrismaBookingRepository integration", () => {
         currency: "PKR",
       }),
     ]);
+    expect(await prisma.ride.count({where: {riderId}})).toBe(1);
+
+    const concurrentRequest = {
+      ...request,
+      idempotencyKey: "prisma_integration_concurrent_01",
+    };
+    const [concurrentFirst, concurrentSecond] = await Promise.all([
+      service.createRide(concurrentRequest),
+      service.createRide(concurrentRequest),
+    ]);
+    expect(concurrentSecond.id).toBe(concurrentFirst.id);
+    expect(await prisma.ride.count({where: {riderId}})).toBe(2);
   });
 
   it("rolls back the ride and transition when payment creation fails", async () => {
@@ -160,6 +176,7 @@ describeDatabase("PrismaBookingRepository integration", () => {
         {
           cityId,
           riderId,
+          idempotencyKey: "prisma_integration_request_02",
           categoryCode: "standard_taxi",
           paymentMethod: "cash",
           pickup: {

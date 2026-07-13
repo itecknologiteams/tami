@@ -80,6 +80,7 @@ describeDatabase("rider authentication integration", () => {
     ).createRide({
       cityId: authenticatedRider.cityId,
       riderId: authenticatedRider.id,
+      idempotencyKey: "auth_integration_request_01",
       categoryCode: "standard_taxi",
       paymentMethod: "cash",
       pickup: {

@@ -306,6 +306,10 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
 
     expect(bookingClient.accessToken, 'rider-session-token');
+    expect(
+      bookingClient.idempotencyKey,
+      matches(RegExp(r'^rider_[0-9]+_[a-f0-9]{32}$')),
+    );
     expect(bookingClient.request?.categoryCode, 'standard_taxi');
     expect(bookingClient.request?.paymentMethod, RiderPaymentMethod.cash);
     expect(bookingClient.request?.pickup.address, 'Civil Lines, Karachi');
@@ -589,15 +593,18 @@ Future<void> _requestMazarRide(WidgetTester tester) async {
 
 class _RecordingBookingClient implements RiderBookingClient {
   String? accessToken;
+  String? idempotencyKey;
   CreateRiderRideRequest? request;
   String? cancelledRideId;
 
   @override
   Future<RiderBookingRide> createRide({
     required String accessToken,
+    required String idempotencyKey,
     required CreateRiderRideRequest request,
   }) async {
     this.accessToken = accessToken;
+    this.idempotencyKey = idempotencyKey;
     this.request = request;
     return const RiderBookingRide(
       id: 'ride_123',

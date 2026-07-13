@@ -9,6 +9,7 @@ import { PricingPolicy } from "../pricing/pricing.types";
 const baseRequest = {
   cityId: "city_karachi",
   riderId: "rider_123",
+  idempotencyKey: "request_1234567890abcdef",
   categoryCode: "standard_taxi" as const,
   pickup: {
     latitude: 24.8607,
@@ -84,6 +85,19 @@ describe("BookingService", () => {
     ]);
   });
 
+  it("returns the original ride when a rider retries the same request", async () => {
+    const repository = new InMemoryBookingRepository();
+    const service = createService(repository);
+
+    const first = await service.createRide(baseRequest);
+    const retried = await service.createRide(baseRequest);
+
+    expect(retried.id).toBe(first.id);
+    expect(repository.rides).toHaveLength(1);
+    expect(repository.transitions).toHaveLength(1);
+    expect(repository.payments).toHaveLength(1);
+  });
+
   it("creates a scheduled ride with a scheduled pickup time", async () => {
     const repository = new InMemoryBookingRepository();
     const service = createService(repository);
@@ -108,6 +122,14 @@ describe("BookingService", () => {
     await expect(
       service.createRide({...baseRequest, paymentMethod: "card"} as never),
     ).rejects.toThrow("Payment method is invalid");
+  });
+
+  it("rejects missing or malformed idempotency keys", async () => {
+    const service = createService(new InMemoryBookingRepository());
+
+    await expect(
+      service.createRide({...baseRequest, idempotencyKey: "short"}),
+    ).rejects.toThrow("Idempotency key is invalid");
   });
 
   it("rejects malformed scheduled pickup times", async () => {

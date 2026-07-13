@@ -10,6 +10,7 @@ const requestedAt = "2026-07-10T10:00:00.000Z";
 const baseRequest: PersistRideForRiderRequest = {
   cityId: "city_karachi",
   riderId: "rider_123",
+  idempotencyKey: "prisma_repository_request_01",
   categoryCode: "standard_taxi",
   pickup: {
     latitude: 24.8607,
@@ -98,6 +99,7 @@ describe("PrismaBookingRepository", () => {
     expect(prisma.$transaction).toHaveBeenCalledOnce();
     expect(prisma.ride.create).toHaveBeenCalledWith({
       data: {
+        idempotencyKey: "prisma_repository_request_01",
         city: { connect: { id: "city_karachi" } },
         rider: { connect: { id: "rider_123" } },
         category: { connect: { code: "standard_taxi" } },

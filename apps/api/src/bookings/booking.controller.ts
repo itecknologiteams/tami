@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Headers,
   NotFoundException,
   Param,
   Post,
@@ -23,11 +24,13 @@ export class BookingController {
   createRide(
     @CurrentRider() rider: AuthenticatedRider,
     @Body() request: CreateRideRequest,
+    @Headers("idempotency-key") idempotencyKey?: string,
   ): Promise<BookingRide> {
     return this.bookingService.createRide({
       ...request,
       cityId: rider.cityId,
       riderId: rider.id,
+      idempotencyKey: idempotencyKey ?? "",
     });
   }
 
