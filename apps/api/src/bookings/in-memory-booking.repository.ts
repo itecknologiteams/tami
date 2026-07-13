@@ -2,18 +2,36 @@ import { BookingRepository } from "./booking.repository";
 import {
   BookingRide,
   BookingRidePage,
+  BookingPayment,
   BookingRideTransition,
   CreateRideForRiderRequest,
+  PersistRideForRiderRequest,
   RiderRideStateChange,
   terminalRideStates,
 } from "./booking.types";
 
+type InMemoryRideRequest = Omit<CreateRideForRiderRequest, "paymentMethod"> &
+  Partial<
+    Pick<
+      PersistRideForRiderRequest,
+      | "paymentMethod"
+      | "estimatedFareMinor"
+      | "currency"
+      | "farePolicyId"
+      | "farePolicyVersion"
+      | "fareMultiplier"
+      | "routeDistanceMeters"
+      | "routeDurationSeconds"
+    >
+  >;
+
 export class InMemoryBookingRepository extends BookingRepository {
   readonly rides: BookingRide[] = [];
   readonly transitions: BookingRideTransition[] = [];
+  readonly payments: BookingPayment[] = [];
 
   async createRideWithInitialTransition(
-    request: CreateRideForRiderRequest,
+    request: InMemoryRideRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
     const ride: BookingRide = {
@@ -26,6 +44,10 @@ export class InMemoryBookingRepository extends BookingRepository {
       destination: request.destination,
       scheduledPickupAt: request.scheduledPickupAt ?? null,
       requestedAt,
+      estimatedFareMinor: request.estimatedFareMinor ?? 0,
+      currency: request.currency ?? "PKR",
+      farePolicyVersion: request.farePolicyVersion ?? null,
+      paymentMethod: request.paymentMethod ?? "cash",
     };
 
     this.rides.push(ride);
@@ -37,6 +59,13 @@ export class InMemoryBookingRepository extends BookingRepository {
       actorType: "rider",
       actorId: request.riderId,
       occurredAt: requestedAt,
+    });
+    this.payments.push({
+      rideId: ride.id,
+      method: request.paymentMethod ?? "cash",
+      status: "pending",
+      amountMinor: request.estimatedFareMinor ?? 0,
+      currency: request.currency ?? "PKR",
     });
 
     return ride;

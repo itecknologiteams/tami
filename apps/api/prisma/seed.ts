@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { seedMissingBaselineFarePolicies } from "./fare-policy-seed";
 
 const prisma = new PrismaClient();
 
@@ -63,6 +64,8 @@ async function main() {
       create: category,
     });
   }
+
+  await seedMissingBaselineFarePolicies(prisma, sindhCities);
 }
 
 main()

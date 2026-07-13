@@ -2,12 +2,12 @@ import { describe, expect, it, vi } from "vitest";
 import { PrismaBookingRepository } from "./prisma-booking.repository";
 import {
   BookingRideTransition,
-  CreateRideForRiderRequest,
+  PersistRideForRiderRequest,
 } from "./booking.types";
 
 const requestedAt = "2026-07-10T10:00:00.000Z";
 
-const baseRequest: CreateRideForRiderRequest = {
+const baseRequest: PersistRideForRiderRequest = {
   cityId: "city_karachi",
   riderId: "rider_123",
   categoryCode: "standard_taxi",
@@ -21,6 +21,14 @@ const baseRequest: CreateRideForRiderRequest = {
     longitude: 67.05,
     address: "Mazar-e-Quaid, Karachi",
   },
+  paymentMethod: "cash",
+  estimatedFareMinor: 51200,
+  currency: "PKR",
+  farePolicyId: "policy_1",
+  farePolicyVersion: 1,
+  fareMultiplier: 1,
+  routeDistanceMeters: 6200,
+  routeDurationSeconds: 930,
 };
 
 const requestedTransition: Omit<BookingRideTransition, "id"> = {
@@ -49,6 +57,10 @@ function createPrismaFake() {
         destinationAddress: "Mazar-e-Quaid, Karachi",
         scheduledPickupAt: null,
         requestedAt: new Date(requestedAt),
+        estimatedFareMinor: 51200,
+        currency: "PKR",
+        farePolicyVersion: 1,
+        payments: [],
       }),
     },
     rideStateTransition: {
@@ -57,6 +69,9 @@ function createPrismaFake() {
         ...requestedTransition,
         occurredAt: new Date(requestedAt),
       }),
+    },
+    paymentRecord: {
+      create: vi.fn().mockResolvedValue({id: "payment_123"}),
     },
   };
 
@@ -95,8 +110,18 @@ describe("PrismaBookingRepository", () => {
         destinationAddress: "Mazar-e-Quaid, Karachi",
         scheduledPickupAt: null,
         requestedAt: new Date(requestedAt),
+        estimatedFareMinor: 51200,
+        currency: "PKR",
+        farePolicy: {connect: {id: "policy_1"}},
+        farePolicyVersion: 1,
+        fareMultiplier: 1,
+        routeDistanceMeters: 6200,
+        routeDurationSeconds: 930,
       },
-      include: { category: true },
+      include: {
+        category: true,
+        payments: {orderBy: {createdAt: "desc"}, take: 1},
+      },
     });
     expect(prisma.rideStateTransition.create).toHaveBeenCalledWith({
       data: {
@@ -106,6 +131,15 @@ describe("PrismaBookingRepository", () => {
         actorType: "rider",
         actorId: "rider_123",
         occurredAt: new Date(requestedAt),
+      },
+    });
+    expect(prisma.paymentRecord.create).toHaveBeenCalledWith({
+      data: {
+        rideId: "ride_123",
+        method: "cash",
+        status: "pending",
+        amountMinor: 51200,
+        currency: "PKR",
       },
     });
     expect(ride).toEqual({
@@ -118,6 +152,10 @@ describe("PrismaBookingRepository", () => {
       destination: baseRequest.destination,
       scheduledPickupAt: null,
       requestedAt,
+      estimatedFareMinor: 51200,
+      currency: "PKR",
+      farePolicyVersion: 1,
+      paymentMethod: "cash",
     });
   });
 

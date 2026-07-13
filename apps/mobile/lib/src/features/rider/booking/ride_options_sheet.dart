@@ -3,9 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../ui/tami_colors.dart';
 import '../../../ui/tami_glass.dart';
 import '../rider_booking_client.dart';
+import '../rider_pricing_client.dart';
 import 'tami_place.dart';
-
-enum RiderPaymentMethod { cash, jazzCash, easypaisa, nayapay }
 
 enum RideCategory { standard, womenFamily, airport, accessible }
 
@@ -27,11 +26,17 @@ class RideOptionsSheet extends StatefulWidget {
   const RideOptionsSheet({
     required this.destination,
     required this.onConfirm,
+    required this.pickup,
+    this.accessToken,
+    this.pricingClient,
     super.key,
   });
 
   final TamiPlace destination;
   final Future<void> Function(RideSelection selection) onConfirm;
+  final RiderCoordinates pickup;
+  final String? accessToken;
+  final RiderPricingClient? pricingClient;
 
   @override
   State<RideOptionsSheet> createState() => _RideOptionsSheetState();
@@ -44,14 +49,59 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
   bool _isSubmitting = false;
   String? _error;
   DateTime? _scheduledPickupAt;
+  RiderFareEstimate? _estimate;
+  bool _isEstimating = false;
+  String? _estimateError;
+  int _estimateRequest = 0;
 
-  int get _estimate {
-    return switch (_category) {
-      RideCategory.standard => 460,
-      RideCategory.womenFamily => 500,
-      RideCategory.airport => 760,
-      RideCategory.accessible => 540,
-    };
+  @override
+  void initState() {
+    super.initState();
+    _loadEstimate();
+  }
+
+  Future<void> _loadEstimate() async {
+    final client = widget.pricingClient;
+    final token = widget.accessToken;
+    if (client == null || token == null) {
+      return;
+    }
+    final requestNumber = ++_estimateRequest;
+    setState(() {
+      _isEstimating = true;
+      _estimateError = null;
+    });
+    try {
+      final estimate = await client.estimateFare(
+        accessToken: token,
+        request: RiderFareEstimateRequest(
+          categoryCode: _isScheduled
+              ? 'scheduled_ride'
+              : _categoryCode(_category),
+          pickup: widget.pickup,
+          destination: RiderCoordinates(
+            latitude: widget.destination.latitude,
+            longitude: widget.destination.longitude,
+            address: widget.destination.address,
+          ),
+          scheduledPickupAt: _isScheduled ? _scheduledPickupAt : null,
+        ),
+      );
+      if (mounted && requestNumber == _estimateRequest) {
+        setState(() => _estimate = estimate);
+      }
+    } on RiderPricingException catch (error) {
+      if (mounted && requestNumber == _estimateRequest) {
+        setState(() {
+          _estimate = null;
+          _estimateError = error.message;
+        });
+      }
+    } finally {
+      if (mounted && requestNumber == _estimateRequest) {
+        setState(() => _isEstimating = false);
+      }
+    }
   }
 
   Future<void> _confirm() async {
@@ -117,6 +167,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
         time.minute,
       );
     });
+    _loadEstimate();
   }
 
   String _scheduledPickupLabel() {
@@ -174,8 +225,10 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                           (category) => ChoiceChip(
                             label: Text(_categoryLabel(category)),
                             selected: _category == category,
-                            onSelected: (_) =>
-                                setState(() => _category = category),
+                            onSelected: (_) {
+                              setState(() => _category = category);
+                              _loadEstimate();
+                            },
                           ),
                         )
                         .toList(),
@@ -196,6 +249,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                           );
                         }
                       });
+                      _loadEstimate();
                     },
                   ),
                   if (_isScheduled) ...[
@@ -249,9 +303,15 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Estimated fare'),
                               Text(
-                                'PKR $_estimate',
+                                _isEstimating
+                                    ? 'Calculating fare'
+                                    : 'Estimated fare',
+                              ),
+                              Text(
+                                _estimate == null
+                                    ? 'Fare unavailable'
+                                    : _formatFare(_estimate!),
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.w800,
@@ -260,10 +320,34 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                             ],
                           ),
                         ),
-                        const Text('Government fare policy'),
+                        if (_estimate?.explanationLines.isNotEmpty ?? false)
+                          Flexible(
+                            child: Text(
+                              _estimate!.explanationLines.last,
+                              textAlign: TextAlign.end,
+                            ),
+                          ),
                       ],
                     ),
                   ),
+                  if (_estimateError != null) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _estimateError!,
+                            style: const TextStyle(color: TamiColors.danger),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Retry fare estimate',
+                          onPressed: _loadEstimate,
+                          icon: const Icon(Icons.refresh),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   if (_error != null) ...[
                     Text(
@@ -276,7 +360,10 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
                     width: double.infinity,
                     height: 52,
                     child: ElevatedButton(
-                      onPressed: _isSubmitting ? null : _confirm,
+                      onPressed:
+                          _isSubmitting || _isEstimating || _estimate == null
+                          ? null
+                          : _confirm,
                       child: Text(
                         _isSubmitting ? 'Requesting ride' : 'Confirm ride',
                       ),
@@ -298,6 +385,14 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
       RideCategory.airport => 'Airport',
       RideCategory.accessible => 'Accessible',
     };
+  }
+
+  String _formatFare(RiderFareEstimate estimate) {
+    final amount = estimate.fareMinor / 100;
+    final formatted = amount == amount.roundToDouble()
+        ? amount.toStringAsFixed(0)
+        : amount.toStringAsFixed(2);
+    return '${estimate.currency} $formatted';
   }
 
   String _categoryCode(RideCategory category) {

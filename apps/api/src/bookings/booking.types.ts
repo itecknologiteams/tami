@@ -1,12 +1,17 @@
 import { RideState } from "@tami/shared";
 
-export type RideCategoryCode =
-  | "standard_taxi"
-  | "women_family_preferred"
-  | "airport"
-  | "accessible_special_assistance"
-  | "government_staff_movement"
-  | "scheduled_ride";
+export const rideCategoryCodes = [
+  "standard_taxi",
+  "women_family_preferred",
+  "airport",
+  "accessible_special_assistance",
+  "government_staff_movement",
+  "scheduled_ride",
+] as const;
+
+export type RideCategoryCode = (typeof rideCategoryCodes)[number];
+
+export type RiderPaymentMethod = "cash" | "jazzcash" | "easypaisa" | "nayapay";
 
 export type Coordinates = {
   latitude: number;
@@ -18,7 +23,18 @@ export type CreateRideRequest = {
   categoryCode: RideCategoryCode;
   pickup: Coordinates;
   destination: Coordinates;
+  paymentMethod: RiderPaymentMethod;
   scheduledPickupAt?: string;
+};
+
+export type PersistRideForRiderRequest = CreateRideForRiderRequest & {
+  estimatedFareMinor: number;
+  currency: string;
+  farePolicyId: string;
+  farePolicyVersion: number;
+  fareMultiplier: number;
+  routeDistanceMeters: number;
+  routeDurationSeconds: number;
 };
 
 export type CreateRideForRiderRequest = CreateRideRequest & {
@@ -36,6 +52,18 @@ export type BookingRide = {
   destination: Coordinates;
   scheduledPickupAt: string | null;
   requestedAt: string;
+  estimatedFareMinor: number | null;
+  currency: string;
+  farePolicyVersion: number | null;
+  paymentMethod: RiderPaymentMethod | null;
+};
+
+export type BookingPayment = {
+  rideId: string;
+  method: RiderPaymentMethod;
+  status: "pending";
+  amountMinor: number;
+  currency: string;
 };
 
 export type BookingRidePage = {

@@ -37,6 +37,9 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Trip details'), findsOneWidget);
     expect(find.text('Pickup'), findsWidgets);
+    expect(find.text('PKR 512.00'), findsOneWidget);
+    expect(find.text('Cash'), findsOneWidget);
+    expect(find.text('Policy version 1'), findsOneWidget);
     await tester.pageBack();
     await tester.pumpAndSettle();
 
@@ -96,6 +99,10 @@ class _TripsClient implements RiderRideQueryClient {
     ),
     scheduledPickupAt: '2026-07-12T09:00:00.000Z',
     requestedAt: '2026-07-11T09:00:00.000Z',
+    estimatedFareMinor: 51200,
+    currency: 'PKR',
+    farePolicyVersion: 1,
+    paymentMethod: 'cash',
   );
 
   @override

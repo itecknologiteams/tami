@@ -3,6 +3,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { BookingService } from "../bookings/booking.service";
 import { PrismaBookingRepository } from "../bookings/prisma-booking.repository";
+import { createIntegrationFarePolicy } from "../pricing/pricing.integration-fixture";
+import { PrismaPricingRepository } from "../pricing/prisma-pricing.repository";
+import { PricingService } from "../pricing/pricing.service";
 import { AuthService } from "./auth.service";
 import { DevelopmentOtpStore } from "./development-otp-store";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
@@ -15,6 +18,7 @@ describeDatabase("rider authentication integration", () => {
   const suffix = randomUUID();
   let cityId: string;
   let riderId: string;
+  let farePolicyId: string;
 
   beforeAll(async () => {
     await prisma.$connect();
@@ -25,6 +29,7 @@ describeDatabase("rider authentication integration", () => {
       },
     });
     cityId = city.id;
+    farePolicyId = await createIntegrationFarePolicy(prisma, cityId, suffix);
   });
 
   afterAll(async () => {
@@ -32,9 +37,11 @@ describeDatabase("rider authentication integration", () => {
       await prisma.rideStateTransition.deleteMany({
         where: { ride: { cityId } },
       });
+      await prisma.paymentRecord.deleteMany({where: {ride: {cityId}}});
       await prisma.ride.deleteMany({ where: { cityId } });
       await prisma.riderSession.deleteMany({ where: { rider: { cityId } } });
       await prisma.rider.deleteMany({ where: { cityId } });
+      await prisma.farePolicy.deleteMany({where: {id: farePolicyId}});
       await prisma.city.deleteMany({ where: { id: cityId } });
     }
     await prisma.$disconnect();
@@ -58,10 +65,12 @@ describeDatabase("rider authentication integration", () => {
     );
     const ride = await new BookingService(
       new PrismaBookingRepository(prisma as never),
+      new PricingService(new PrismaPricingRepository(prisma as never)),
     ).createRide({
       cityId: authenticatedRider.cityId,
       riderId: authenticatedRider.id,
       categoryCode: "standard_taxi",
+      paymentMethod: "cash",
       pickup: {
         latitude: 24.8607,
         longitude: 67.0011,

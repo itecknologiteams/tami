@@ -2,6 +2,17 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+enum RiderPaymentMethod { cash, jazzCash, easypaisa, nayapay }
+
+extension RiderPaymentMethodWireValue on RiderPaymentMethod {
+  String get wireValue => switch (this) {
+    RiderPaymentMethod.cash => 'cash',
+    RiderPaymentMethod.jazzCash => 'jazzcash',
+    RiderPaymentMethod.easypaisa => 'easypaisa',
+    RiderPaymentMethod.nayapay => 'nayapay',
+  };
+}
+
 class RiderCoordinates {
   const RiderCoordinates({
     required this.latitude,
@@ -25,18 +36,21 @@ class CreateRiderRideRequest {
     required this.categoryCode,
     required this.pickup,
     required this.destination,
+    required this.paymentMethod,
     this.scheduledPickupAt,
   });
 
   final String categoryCode;
   final RiderCoordinates pickup;
   final RiderCoordinates destination;
+  final RiderPaymentMethod paymentMethod;
   final DateTime? scheduledPickupAt;
 
   Map<String, dynamic> toJson() => {
     'categoryCode': categoryCode,
     'pickup': pickup.toJson(),
     'destination': destination.toJson(),
+    'paymentMethod': paymentMethod.wireValue,
     if (scheduledPickupAt != null)
       'scheduledPickupAt': scheduledPickupAt!.toUtc().toIso8601String(),
   };
@@ -48,12 +62,20 @@ class RiderBookingRide {
     required this.state,
     required this.categoryCode,
     required this.scheduledPickupAt,
+    this.estimatedFareMinor,
+    this.currency,
+    this.farePolicyVersion,
+    this.paymentMethod,
   });
 
   final String id;
   final String state;
   final String categoryCode;
   final String? scheduledPickupAt;
+  final int? estimatedFareMinor;
+  final String? currency;
+  final int? farePolicyVersion;
+  final String? paymentMethod;
 
   factory RiderBookingRide.fromJson(Map<String, dynamic> json) {
     return RiderBookingRide(
@@ -61,6 +83,10 @@ class RiderBookingRide {
       state: json['state'] as String,
       categoryCode: json['categoryCode'] as String,
       scheduledPickupAt: json['scheduledPickupAt'] as String?,
+      estimatedFareMinor: json['estimatedFareMinor'] as int?,
+      currency: json['currency'] as String?,
+      farePolicyVersion: json['farePolicyVersion'] as int?,
+      paymentMethod: json['paymentMethod'] as String?,
     );
   }
 }

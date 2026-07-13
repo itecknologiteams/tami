@@ -31,6 +31,10 @@ class RiderRide {
     required this.destination,
     required this.scheduledPickupAt,
     required this.requestedAt,
+    this.estimatedFareMinor,
+    this.currency,
+    this.farePolicyVersion,
+    this.paymentMethod,
   });
 
   final String id;
@@ -40,6 +44,10 @@ class RiderRide {
   final RiderRideLocation destination;
   final String? scheduledPickupAt;
   final String requestedAt;
+  final int? estimatedFareMinor;
+  final String? currency;
+  final int? farePolicyVersion;
+  final String? paymentMethod;
 
   factory RiderRide.fromJson(Map<String, dynamic> json) {
     return RiderRide(
@@ -54,6 +62,10 @@ class RiderRide {
       ),
       scheduledPickupAt: json['scheduledPickupAt'] as String?,
       requestedAt: json['requestedAt'] as String,
+      estimatedFareMinor: json['estimatedFareMinor'] as int?,
+      currency: json['currency'] as String?,
+      farePolicyVersion: json['farePolicyVersion'] as int?,
+      paymentMethod: json['paymentMethod'] as String?,
     );
   }
 }

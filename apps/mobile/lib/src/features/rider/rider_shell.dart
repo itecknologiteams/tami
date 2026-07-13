@@ -8,6 +8,7 @@ import 'rider_chat_client.dart';
 import 'rider_home_screen.dart';
 import 'rider_ride_query_client.dart';
 import 'rider_saved_place_client.dart';
+import 'rider_pricing_client.dart';
 import 'trips/rider_trips_screen.dart';
 
 class RiderShell extends StatefulWidget {
@@ -17,6 +18,7 @@ class RiderShell extends StatefulWidget {
     this.chatClient,
     this.rideQueryClient,
     this.savedPlaceClient,
+    this.pricingClient,
     super.key,
   });
 
@@ -25,6 +27,7 @@ class RiderShell extends StatefulWidget {
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
+  final RiderPricingClient? pricingClient;
 
   @override
   State<RiderShell> createState() => _RiderShellState();
@@ -42,6 +45,7 @@ class _RiderShellState extends State<RiderShell> {
         chatClient: widget.chatClient,
         rideQueryClient: widget.rideQueryClient,
         savedPlaceClient: widget.savedPlaceClient,
+        pricingClient: widget.pricingClient,
       ),
       RiderTripsScreen(
         session: widget.session,

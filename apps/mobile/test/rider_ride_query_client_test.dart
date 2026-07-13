@@ -18,7 +18,11 @@ void main() {
             "pickup":{"latitude":24.86,"longitude":67.01,"address":"Pickup"},
             "destination":{"latitude":24.88,"longitude":67.05,"address":"Destination"},
             "scheduledPickupAt":null,
-            "requestedAt":"2026-07-11T09:00:00.000Z"
+            "requestedAt":"2026-07-11T09:00:00.000Z",
+            "estimatedFareMinor":51200,
+            "currency":"PKR",
+            "farePolicyVersion":1,
+            "paymentMethod":"cash"
           }
         ''', 200);
       }),
@@ -28,6 +32,10 @@ void main() {
 
     expect(ride?.id, 'ride_1');
     expect(ride?.destination.address, 'Destination');
+    expect(ride?.estimatedFareMinor, 51200);
+    expect(ride?.currency, 'PKR');
+    expect(ride?.farePolicyVersion, 1);
+    expect(ride?.paymentMethod, 'cash');
   });
 
   test('loads upcoming rides and paginated history', () async {

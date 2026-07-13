@@ -1,16 +1,45 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { assertRideStateTransition } from "@tami/shared";
 import { BookingRepository } from "./booking.repository";
-import { BookingRide, CreateRideForRiderRequest } from "./booking.types";
+import {
+  BookingRide,
+  CreateRideForRiderRequest,
+  RiderPaymentMethod,
+} from "./booking.types";
+import { PricingService } from "../pricing/pricing.service";
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly bookingRepository: BookingRepository) {}
+  constructor(
+    private readonly bookingRepository: BookingRepository,
+    private readonly pricingService: PricingService,
+  ) {}
 
   async createRide(request: CreateRideForRiderRequest): Promise<BookingRide> {
+    if (!paymentMethods.has(request.paymentMethod)) {
+      throw new BadRequestException("Payment method is invalid");
+    }
+    const estimate = await this.pricingService.estimateFare({
+      cityId: request.cityId,
+      categoryCode: request.categoryCode,
+      pickup: request.pickup,
+      destination: request.destination,
+      ...(request.scheduledPickupAt == null
+        ? {}
+        : {scheduledPickupAt: request.scheduledPickupAt}),
+    });
     const requestedAt = new Date().toISOString();
     return this.bookingRepository.createRideWithInitialTransition(
-      request,
+      {
+        ...request,
+        estimatedFareMinor: estimate.fareMinor,
+        currency: estimate.currency,
+        farePolicyId: estimate.policyId,
+        farePolicyVersion: estimate.policyVersion,
+        fareMultiplier: estimate.multiplier,
+        routeDistanceMeters: estimate.distanceMeters,
+        routeDurationSeconds: estimate.durationSeconds,
+      },
       requestedAt,
     );
   }
@@ -46,3 +75,10 @@ export class BookingService {
     });
   }
 }
+
+const paymentMethods = new Set<RiderPaymentMethod>([
+  "cash",
+  "jazzcash",
+  "easypaisa",
+  "nayapay",
+]);

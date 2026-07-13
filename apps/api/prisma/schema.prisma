@@ -75,12 +75,13 @@ model City {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  zones    Zone[]
-  riders   Rider[]
-  drivers  Driver[]
-  vehicles Vehicle[]
-  rides    Ride[]
-  savedPlaces SavedPlace[]
+  zones        Zone[]
+  riders       Rider[]
+  drivers      Driver[]
+  vehicles     Vehicle[]
+  rides        Ride[]
+  savedPlaces  SavedPlace[]
+  farePolicies FarePolicy[]
 }
 
 model Zone {
@@ -120,9 +121,9 @@ model Rider {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  city  City   @relation(fields: [cityId], references: [id])
-  rides Ride[]
-  sessions RiderSession[]
+  city        City           @relation(fields: [cityId], references: [id])
+  rides       Ride[]
+  sessions    RiderSession[]
   savedPlaces SavedPlace[]
 }
 
@@ -186,6 +187,45 @@ model Vehicle {
   rides  Ride[]
 }
 
+model FarePolicy {
+  id                String   @id @default(cuid())
+  cityId            String
+  version           Int
+  name              String
+  active            Boolean  @default(false)
+  currency          String   @default("PKR")
+  baseFareMinor     Int
+  perKilometerMinor Int
+  perMinuteMinor    Int
+  bookingFeeMinor   Int
+  minimumFareMinor  Int
+  demandMultiplier  Decimal  @db.Decimal(5, 2)
+  maximumMultiplier Decimal  @db.Decimal(5, 2)
+  maximumFareMinor  Int?
+  roadFactor        Decimal  @db.Decimal(5, 2)
+  averageSpeedKph   Int
+  effectiveFrom     DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  city          City                     @relation(fields: [cityId], references: [id])
+  categoryRates FarePolicyCategoryRate[]
+  rides         Ride[]
+
+  @@unique([cityId, version])
+  @@index([cityId, active])
+}
+
+model FarePolicyCategoryRate {
+  farePolicyId String
+  categoryCode RideCategoryCode
+  multiplier   Decimal          @db.Decimal(5, 2)
+
+  farePolicy FarePolicy @relation(fields: [farePolicyId], references: [id], onDelete: Cascade)
+
+  @@id([farePolicyId, categoryCode])
+}
+
 model Ride {
   id                   String    @id @default(cuid())
   cityId               String
@@ -205,19 +245,25 @@ model Ride {
   estimatedFareMinor   Int?
   finalFareMinor       Int?
   currency             String    @default("PKR")
+  farePolicyId         String?
+  farePolicyVersion    Int?
+  fareMultiplier       Decimal?  @db.Decimal(5, 2)
+  routeDistanceMeters  Int?
+  routeDurationSeconds Int?
   requestedAt          DateTime  @default(now())
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  city        City                  @relation(fields: [cityId], references: [id])
-  zone        Zone?                 @relation(fields: [zoneId], references: [id])
-  rider       Rider                 @relation(fields: [riderId], references: [id])
-  driver      Driver?               @relation(fields: [driverId], references: [id])
-  vehicle     Vehicle?              @relation(fields: [vehicleId], references: [id])
-  category    RideCategory          @relation(fields: [categoryId], references: [id])
-  transitions RideStateTransition[]
-  payments    PaymentRecord[]
+  city         City                  @relation(fields: [cityId], references: [id])
+  zone         Zone?                 @relation(fields: [zoneId], references: [id])
+  rider        Rider                 @relation(fields: [riderId], references: [id])
+  driver       Driver?               @relation(fields: [driverId], references: [id])
+  vehicle      Vehicle?              @relation(fields: [vehicleId], references: [id])
+  category     RideCategory          @relation(fields: [categoryId], references: [id])
+  transitions  RideStateTransition[]
+  payments     PaymentRecord[]
   chatMessages ChatMessage[]
+  farePolicy   FarePolicy?           @relation(fields: [farePolicyId], references: [id], onDelete: SetNull)
 }
 
 model ChatMessage {
@@ -235,18 +281,18 @@ model ChatMessage {
 }
 
 model RideStateTransition {
-  id         String    @id @default(cuid())
+  id         String     @id @default(cuid())
   rideId     String
   fromState  RideState?
   toState    RideState
   actorType  String
   actorId    String
   reason     String?
-  latitude   Decimal?  @db.Decimal(9, 6)
-  longitude  Decimal?  @db.Decimal(9, 6)
+  latitude   Decimal?   @db.Decimal(9, 6)
+  longitude  Decimal?   @db.Decimal(9, 6)
   source     String?
-  occurredAt DateTime  @default(now())
-  createdAt  DateTime  @default(now())
+  occurredAt DateTime   @default(now())
+  createdAt  DateTime   @default(now())
 
   ride Ride @relation(fields: [rideId], references: [id])
 }

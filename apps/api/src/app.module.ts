@@ -21,6 +21,10 @@ import { SavedPlacesController } from "./places/saved-places.controller";
 import { SavedPlacesRepository } from "./places/saved-places.repository";
 import { SavedPlacesService } from "./places/saved-places.service";
 import { PrismaService } from "./prisma/prisma.service";
+import { PricingController } from "./pricing/pricing.controller";
+import { PrismaPricingRepository } from "./pricing/prisma-pricing.repository";
+import { PricingRepository } from "./pricing/pricing.repository";
+import { PricingService } from "./pricing/pricing.service";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
 import { RideTransitionService } from "./rides/ride-transition.service";
@@ -37,6 +41,7 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     RideChatController,
     RiderRideQueryController,
     SavedPlacesController,
+    PricingController,
   ],
   providers: [
     RideTransitionService,
@@ -54,6 +59,7 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     BookingService,
     RideChatService,
     SavedPlacesService,
+    PricingService,
     {
       provide: BookingRepository,
       useClass: PrismaBookingRepository,
@@ -65,6 +71,10 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     {
       provide: SavedPlacesRepository,
       useClass: PrismaSavedPlacesRepository,
+    },
+    {
+      provide: PricingRepository,
+      useClass: PrismaPricingRepository,
     },
   ],
 })

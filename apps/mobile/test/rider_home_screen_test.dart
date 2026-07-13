@@ -6,6 +6,7 @@ import 'package:tami_mobile/src/features/rider/rider_chat_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_home_screen.dart';
 import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_saved_place_client.dart';
+import 'package:tami_mobile/src/features/rider/rider_pricing_client.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 
 void main() {
@@ -142,6 +143,7 @@ void main() {
             ),
           ),
           bookingClient: bookingClient,
+          pricingClient: _PricingClient(),
         ),
       ),
     );
@@ -161,11 +163,68 @@ void main() {
 
     expect(bookingClient.accessToken, 'rider-session-token');
     expect(bookingClient.request?.categoryCode, 'standard_taxi');
+    expect(bookingClient.request?.paymentMethod, RiderPaymentMethod.cash);
     expect(
       bookingClient.request?.destination.address,
       'Mazar-e-Quaid, Karachi',
     );
     expect(find.text('Finding your driver'), findsOneWidget);
+    expect(find.text('Confirmed fare PKR 536.64'), findsOneWidget);
+    expect(find.text('Payment Cash'), findsOneWidget);
+  });
+
+  testWidgets('shows the server fare estimate in ride options', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          pricingClient: _PricingClient(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Where to?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('destination-search')),
+      'Mazar',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Mazar-e-Quaid'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('PKR 512'), findsOneWidget);
+    expect(find.text('Policy version 1'), findsOneWidget);
+  });
+
+  testWidgets('disables confirmation while fare pricing is unavailable', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          pricingClient: _FailingPricingClient(),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Where to?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('destination-search')),
+      'Mazar',
+    );
+    await tester.pump();
+    await tester.tap(find.text('Mazar-e-Quaid'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Fare unavailable'), findsOneWidget);
+    expect(
+      tester.widget<ElevatedButton>(find.byType(ElevatedButton)).onPressed,
+      isNull,
+    );
+    expect(find.byTooltip('Retry fare estimate'), findsOneWidget);
   });
 
   testWidgets('cancels a requested ride from the active ride panel', (
@@ -187,6 +246,7 @@ void main() {
             ),
           ),
           bookingClient: bookingClient,
+          pricingClient: _PricingClient(),
         ),
       ),
     );
@@ -339,6 +399,9 @@ class _RecordingBookingClient implements RiderBookingClient {
       state: 'requested',
       categoryCode: 'standard_taxi',
       scheduledPickupAt: null,
+      estimatedFareMinor: 53664,
+      currency: 'PKR',
+      paymentMethod: 'cash',
     );
   }
 
@@ -353,8 +416,47 @@ class _RecordingBookingClient implements RiderBookingClient {
       state: 'cancelled_by_rider',
       categoryCode: 'standard_taxi',
       scheduledPickupAt: null,
+      estimatedFareMinor: 53664,
+      currency: 'PKR',
+      paymentMethod: 'cash',
     );
   }
+}
+
+class _PricingClient implements RiderPricingClient {
+  @override
+  Future<RiderFareEstimate> estimateFare({
+    required String accessToken,
+    required RiderFareEstimateRequest request,
+  }) async {
+    return const RiderFareEstimate(
+      fareMinor: 51200,
+      currency: 'PKR',
+      policyId: 'policy_1',
+      policyVersion: 1,
+      distanceMeters: 6200,
+      durationSeconds: 930,
+      routeMethod: 'great_circle_road_factor_v1',
+      multiplier: 1,
+      capApplied: false,
+      breakdown: RiderFareBreakdown(
+        baseFareMinor: 20000,
+        distanceFareMinor: 21700,
+        timeFareMinor: 7500,
+        bookingFeeMinor: 2000,
+        subtotalMinor: 51200,
+      ),
+      explanationLines: ['Policy version 1'],
+    );
+  }
+}
+
+class _FailingPricingClient implements RiderPricingClient {
+  @override
+  Future<RiderFareEstimate> estimateFare({
+    required String accessToken,
+    required RiderFareEstimateRequest request,
+  }) async => throw const RiderPricingException('Fare service is unavailable');
 }
 
 class _RecordingChatClient implements RiderChatClient {

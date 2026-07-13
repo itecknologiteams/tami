@@ -2,11 +2,15 @@ import { describe, expect, it } from "vitest";
 import { BookingController } from "./booking.controller";
 import { BookingService } from "./booking.service";
 import { InMemoryBookingRepository } from "./in-memory-booking.repository";
+import { createTestPricingService } from "../pricing/pricing.test-fixture";
 
 describe("BookingController", () => {
   it("creates a ride request", async () => {
     const controller = new BookingController(
-      new BookingService(new InMemoryBookingRepository()),
+      new BookingService(
+        new InMemoryBookingRepository(),
+        createTestPricingService(),
+      ),
     );
 
     const ride = await controller.createRide(
@@ -17,6 +21,7 @@ describe("BookingController", () => {
       },
       {
         categoryCode: "standard_taxi",
+        paymentMethod: "cash",
         pickup: {
           latitude: 24.8607,
           longitude: 67.0011,
@@ -44,7 +49,10 @@ describe("BookingController", () => {
 
   it("cancels a ride for the authenticated rider", async () => {
     const controller = new BookingController(
-      new BookingService(new InMemoryBookingRepository()),
+      new BookingService(
+        new InMemoryBookingRepository(),
+        createTestPricingService(),
+      ),
     );
     const rider = {
       id: "rider_123",
@@ -53,6 +61,7 @@ describe("BookingController", () => {
     };
     const ride = await controller.createRide(rider, {
       categoryCode: "standard_taxi",
+      paymentMethod: "cash",
       pickup: {
         latitude: 24.8607,
         longitude: 67.0011,
@@ -72,7 +81,10 @@ describe("BookingController", () => {
 
   it("does not allow a rider to cancel another rider's ride", async () => {
     const controller = new BookingController(
-      new BookingService(new InMemoryBookingRepository()),
+      new BookingService(
+        new InMemoryBookingRepository(),
+        createTestPricingService(),
+      ),
     );
     const rider = {
       id: "rider_123",
@@ -81,6 +93,7 @@ describe("BookingController", () => {
     };
     const ride = await controller.createRide(rider, {
       categoryCode: "standard_taxi",
+      paymentMethod: "cash",
       pickup: {
         latitude: 24.8607,
         longitude: 67.0011,

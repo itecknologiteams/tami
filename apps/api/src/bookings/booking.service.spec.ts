@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { BookingService } from "./booking.service";
 import { InMemoryBookingRepository } from "./in-memory-booking.repository";
+import { InMemoryPricingRepository } from "../pricing/in-memory-pricing.repository";
+import { PricingService } from "../pricing/pricing.service";
+import { PricingPolicy } from "../pricing/pricing.types";
 
 const baseRequest = {
   cityId: "city_karachi",
@@ -16,18 +19,56 @@ const baseRequest = {
     longitude: 67.0500,
     address: "Mazar-e-Quaid, Karachi",
   },
+  paymentMethod: "cash" as const,
 };
+
+const pricingPolicy: PricingPolicy = {
+  id: "policy_1",
+  cityId: "city_karachi",
+  version: 1,
+  currency: "PKR",
+  baseFareMinor: 20000,
+  perKilometerMinor: 3500,
+  perMinuteMinor: 500,
+  bookingFeeMinor: 2000,
+  minimumFareMinor: 25000,
+  demandMultiplier: 1,
+  maximumMultiplier: 2,
+  maximumFareMinor: 1000000,
+  roadFactor: 1.25,
+  averageSpeedKph: 24,
+  categoryMultiplier: 1,
+};
+
+function createService(repository: InMemoryBookingRepository) {
+  return new BookingService(
+    repository,
+    new PricingService(new InMemoryPricingRepository([pricingPolicy])),
+  );
+}
 
 describe("BookingService", () => {
   it("creates an immediate ride in requested state with an audit transition", async () => {
     const repository = new InMemoryBookingRepository();
-    const service = new BookingService(repository);
+    const service = createService(repository);
 
     const ride = await service.createRide(baseRequest);
 
     expect(ride.state).toBe("requested");
     expect(ride.cityId).toBe("city_karachi");
     expect(ride.scheduledPickupAt).toBeNull();
+    expect(ride.estimatedFareMinor).toBeGreaterThan(0);
+    expect(ride.farePolicyVersion).toBe(1);
+    expect(ride.paymentMethod).toBe("cash");
+    expect(repository.payments).toEqual([
+      expect.objectContaining({
+        rideId: ride.id,
+        method: "cash",
+        status: "pending",
+        amountMinor: ride.estimatedFareMinor,
+        currency: "PKR",
+      }),
+    ]);
     expect(repository.transitions).toEqual([
       expect.objectContaining({
         rideId: ride.id,
@@ -41,8 +82,10 @@ describe("BookingService", () => {
 
   it("creates a scheduled ride with a scheduled pickup time", async () => {
     const repository = new InMemoryBookingRepository();
-    const service = new BookingService(repository);
-    const scheduledPickupAt = "2026-08-01T08:30:00.000Z";
+    const service = createService(repository);
+    const scheduledPickupAt = new Date(
+      Date.now() + 24 * 60 * 60 * 1000,
+    ).toISOString();
 
     const ride = await service.createRide({
       ...baseRequest,
@@ -55,9 +98,68 @@ describe("BookingService", () => {
     expect(ride.scheduledPickupAt).toBe(scheduledPickupAt);
   });
 
+  it("rejects unsupported payment methods before pricing the ride", async () => {
+    const service = createService(new InMemoryBookingRepository());
+
+    await expect(
+      service.createRide({...baseRequest, paymentMethod: "card"} as never),
+    ).rejects.toThrow("Payment method is invalid");
+  });
+
+  it("rejects malformed scheduled pickup times", async () => {
+    const service = createService(new InMemoryBookingRepository());
+
+    await expect(
+      service.createRide({
+        ...baseRequest,
+        categoryCode: "scheduled_ride",
+        scheduledPickupAt: "tomorrow",
+      }),
+    ).rejects.toThrow("Scheduled pickup time is invalid");
+  });
+
+  it("requires scheduled_ride exactly when a pickup time is supplied", async () => {
+    const service = createService(new InMemoryBookingRepository());
+    const scheduledPickupAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+
+    await expect(
+      service.createRide({...baseRequest, scheduledPickupAt}),
+    ).rejects.toThrow("Scheduled pickup time requires scheduled_ride category");
+    await expect(
+      service.createRide({...baseRequest, categoryCode: "scheduled_ride"}),
+    ).rejects.toThrow("Scheduled rides require a pickup time");
+  });
+
+  it("rejects scheduled pickups beyond Flutter's 90-day limit", async () => {
+    const service = createService(new InMemoryBookingRepository());
+    const scheduledPickupAt = new Date(
+      Date.now() + 91 * 24 * 60 * 60 * 1000,
+    ).toISOString();
+
+    await expect(
+      service.createRide({
+        ...baseRequest,
+        categoryCode: "scheduled_ride",
+        scheduledPickupAt,
+      }),
+    ).rejects.toThrow("Scheduled pickup time must be within 90 days");
+  });
+
+  it("rejects scheduled pickup times in the past", async () => {
+    const service = createService(new InMemoryBookingRepository());
+
+    await expect(
+      service.createRide({
+        ...baseRequest,
+        categoryCode: "scheduled_ride",
+        scheduledPickupAt: "2020-01-01T00:00:00.000Z",
+      }),
+    ).rejects.toThrow("Scheduled pickup time must be in the future");
+  });
+
   it("cancels a rider's requested ride and records the transition", async () => {
     const repository = new InMemoryBookingRepository();
-    const service = new BookingService(repository);
+    const service = createService(repository);
     const ride = await service.createRide(baseRequest);
 
     const cancelled = await service.cancelRide({

@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { BookingService } from "../bookings/booking.service";
 import { InMemoryBookingRepository } from "../bookings/in-memory-booking.repository";
+import { createTestPricingService } from "../pricing/pricing.test-fixture";
 import { RiderRideQueryController } from "./rider-ride-query.controller";
 import { RiderRideQueryService } from "./rider-ride-query.service";
 
@@ -14,11 +15,12 @@ const rider = {
 describe("RiderRideQueryController", () => {
   it("returns rider-owned detail and rejects another rider", async () => {
     const repository = new InMemoryBookingRepository();
-    const booking = new BookingService(repository);
+    const booking = new BookingService(repository, createTestPricingService());
     const ride = await booking.createRide({
       cityId: rider.cityId,
       riderId: rider.id,
       categoryCode: "standard_taxi",
+      paymentMethod: "cash",
       pickup: {latitude: 24.86, longitude: 67.01, address: "Pickup"},
       destination: {latitude: 24.88, longitude: 67.05, address: "Destination"},
     });

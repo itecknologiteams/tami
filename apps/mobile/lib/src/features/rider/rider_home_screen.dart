@@ -14,6 +14,7 @@ import 'rider_booking_client.dart';
 import 'rider_chat_client.dart';
 import 'rider_ride_query_client.dart';
 import 'rider_saved_place_client.dart';
+import 'rider_pricing_client.dart';
 
 export 'booking/tami_place.dart';
 
@@ -25,6 +26,7 @@ class RiderHomeScreen extends StatefulWidget {
     this.chatClient,
     this.rideQueryClient,
     this.savedPlaceClient,
+    this.pricingClient,
     this.initialRide,
     this.initialDestination,
     super.key,
@@ -36,6 +38,7 @@ class RiderHomeScreen extends StatefulWidget {
   final RiderChatClient? chatClient;
   final RiderRideQueryClient? rideQueryClient;
   final RiderSavedPlaceClient? savedPlaceClient;
+  final RiderPricingClient? pricingClient;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
 
@@ -94,6 +97,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           state: ride.state,
           categoryCode: ride.categoryCode,
           scheduledPickupAt: ride.scheduledPickupAt,
+          estimatedFareMinor: ride.estimatedFareMinor,
+          currency: ride.currency,
+          farePolicyVersion: ride.farePolicyVersion,
+          paymentMethod: ride.paymentMethod,
         );
         _destination = TamiPlace(
           name: ride.destination.address.split(',').first,
@@ -130,8 +137,13 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) =>
-          RideOptionsSheet(destination: destination, onConfirm: _requestRide),
+      builder: (context) => RideOptionsSheet(
+        destination: destination,
+        pickup: _pickup,
+        accessToken: widget.session?.accessToken,
+        pricingClient: widget.pricingClient,
+        onConfirm: _requestRide,
+      ),
     );
   }
 
@@ -146,17 +158,14 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       accessToken: session.accessToken,
       request: CreateRiderRideRequest(
         categoryCode: selection.categoryCode,
-        pickup: const RiderCoordinates(
-          latitude: 24.8607,
-          longitude: 67.0011,
-          address: 'Frere Hall, Karachi',
-        ),
+        pickup: _pickup,
         destination: RiderCoordinates(
           latitude: selection.destination.latitude,
           longitude: selection.destination.longitude,
           address: selection.destination.address,
         ),
         scheduledPickupAt: selection.scheduledPickupAt,
+        paymentMethod: selection.paymentMethod,
       ),
     );
     if (mounted) {
@@ -279,6 +288,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                         : ActiveRidePanel(
                             destination: _destination!,
                             rideState: _activeRide!.state,
+                            estimatedFareMinor: _activeRide!.estimatedFareMinor,
+                            currency: _activeRide!.currency,
+                            paymentMethod: _activeRide!.paymentMethod,
                             onCancel: _confirmCancelRide,
                             onChat: widget.chatClient == null
                                 ? null
@@ -294,6 +306,12 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     );
   }
 }
+
+const _pickup = RiderCoordinates(
+  latitude: 24.8607,
+  longitude: 67.0011,
+  address: 'Frere Hall, Karachi',
+);
 
 class _CityPill extends StatelessWidget {
   const _CityPill();

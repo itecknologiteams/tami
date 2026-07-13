@@ -11,6 +11,9 @@ class ActiveRidePanel extends StatelessWidget {
     required this.rideState,
     required this.onCancel,
     required this.onChat,
+    this.estimatedFareMinor,
+    this.currency,
+    this.paymentMethod,
     super.key,
   });
 
@@ -18,6 +21,9 @@ class ActiveRidePanel extends StatelessWidget {
   final String rideState;
   final VoidCallback onCancel;
   final VoidCallback? onChat;
+  final int? estimatedFareMinor;
+  final String? currency;
+  final String? paymentMethod;
 
   bool get _chatAvailable => {
     'accepted',
@@ -87,6 +93,16 @@ class ActiveRidePanel extends StatelessWidget {
             'Ride requested to ${destination.name}',
             style: const TextStyle(color: Color(0xFF55716A)),
           ),
+          if (estimatedFareMinor != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Confirmed fare ${_formatFare(estimatedFareMinor!, currency)}',
+            ),
+          ],
+          if (paymentMethod != null) ...[
+            const SizedBox(height: 4),
+            Text('Payment ${_paymentLabel(paymentMethod!)}'),
+          ],
           const SizedBox(height: 14),
           TamiRouteRibbon(currentStep: _progressStep, steps: 6),
           const SizedBox(height: 16),
@@ -104,5 +120,19 @@ class ActiveRidePanel extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _formatFare(int amountMinor, String? currencyCode) {
+    return '${currencyCode ?? 'PKR'} ${(amountMinor / 100).toStringAsFixed(2)}';
+  }
+
+  String _paymentLabel(String method) {
+    return switch (method) {
+      'cash' => 'Cash',
+      'jazzcash' => 'JazzCash',
+      'easypaisa' => 'Easypaisa',
+      'nayapay' => 'NayaPay',
+      _ => method,
+    };
   }
 }

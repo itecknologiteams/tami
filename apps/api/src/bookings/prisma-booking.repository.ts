@@ -5,21 +5,33 @@ import {
   BookingRide,
   BookingRidePage,
   BookingRideTransition,
-  CreateRideForRiderRequest,
+  PersistRideForRiderRequest,
+  RiderPaymentMethod,
   RiderRideStateChange,
   terminalRideStates,
 } from "./booking.types";
 import { PrismaService } from "../prisma/prisma.service";
 
 type PersistedRide = Prisma.RideGetPayload<{
-  include: { category: true };
+  include: {
+    category: true;
+    payments: { orderBy: { createdAt: "desc" }; take: 1 };
+  };
 }>;
+
+const rideInclude = {
+  category: true,
+  payments: { orderBy: { createdAt: "desc" }, take: 1 },
+} satisfies Prisma.RideInclude;
 
 function toNumber(value: { toNumber(): number } | number): number {
   return typeof value === "number" ? value : value.toNumber();
 }
 
-function toBookingRide(ride: PersistedRide): BookingRide {
+function toBookingRide(
+  ride: PersistedRide,
+  fallbackPaymentMethod: RiderPaymentMethod | null = null,
+): BookingRide {
   return {
     id: ride.id,
     cityId: ride.cityId,
@@ -38,6 +50,12 @@ function toBookingRide(ride: PersistedRide): BookingRide {
     },
     scheduledPickupAt: ride.scheduledPickupAt?.toISOString() ?? null,
     requestedAt: ride.requestedAt.toISOString(),
+    estimatedFareMinor: ride.estimatedFareMinor,
+    currency: ride.currency,
+    farePolicyVersion: ride.farePolicyVersion,
+    paymentMethod:
+      (ride.payments[0]?.method as RiderPaymentMethod | undefined) ??
+      fallbackPaymentMethod,
   };
 }
 
@@ -48,7 +66,7 @@ export class PrismaBookingRepository extends BookingRepository {
   }
 
   async createRideWithInitialTransition(
-    request: CreateRideForRiderRequest,
+    request: PersistRideForRiderRequest,
     requestedAt: string,
   ): Promise<BookingRide> {
     return this.prisma.$transaction(async (transaction) => {
@@ -67,9 +85,16 @@ export class PrismaBookingRepository extends BookingRepository {
           scheduledPickupAt: request.scheduledPickupAt
             ? new Date(request.scheduledPickupAt)
             : null,
+          estimatedFareMinor: request.estimatedFareMinor,
+          currency: request.currency,
+          farePolicy: { connect: { id: request.farePolicyId } },
+          farePolicyVersion: request.farePolicyVersion,
+          fareMultiplier: request.fareMultiplier,
+          routeDistanceMeters: request.routeDistanceMeters,
+          routeDurationSeconds: request.routeDurationSeconds,
           requestedAt: new Date(requestedAt),
         },
-        include: { category: true },
+        include: rideInclude,
       });
 
       await transaction.rideStateTransition.create({
@@ -83,7 +108,17 @@ export class PrismaBookingRepository extends BookingRepository {
         },
       });
 
-      return toBookingRide(ride);
+      await transaction.paymentRecord.create({
+        data: {
+          rideId: ride.id,
+          method: request.paymentMethod,
+          status: "pending",
+          amountMinor: request.estimatedFareMinor,
+          currency: request.currency,
+        },
+      });
+
+      return toBookingRide(ride, request.paymentMethod);
     });
   }
 
@@ -118,7 +153,7 @@ export class PrismaBookingRepository extends BookingRepository {
   ): Promise<BookingRide | null> {
     const ride = await this.prisma.ride.findFirst({
       where: { id: rideId, riderId },
-      include: { category: true },
+      include: rideInclude,
     });
     return ride == null ? null : toBookingRide(ride);
   }
@@ -134,7 +169,7 @@ export class PrismaBookingRepository extends BookingRepository {
         OR: [{scheduledPickupAt: null}, {scheduledPickupAt: {lte: now}}],
       },
       orderBy: [{requestedAt: "desc"}, {id: "desc"}],
-      include: {category: true},
+      include: rideInclude,
     });
     return ride == null ? null : toBookingRide(ride);
   }
@@ -150,9 +185,9 @@ export class PrismaBookingRepository extends BookingRepository {
         scheduledPickupAt: {gt: now},
       },
       orderBy: [{scheduledPickupAt: "asc"}, {id: "asc"}],
-      include: {category: true},
+      include: rideInclude,
     });
-    return rides.map(toBookingRide);
+    return rides.map((ride) => toBookingRide(ride));
   }
 
   async findRideHistoryForRider(
@@ -166,10 +201,12 @@ export class PrismaBookingRepository extends BookingRepository {
       ...(options.cursor == null
         ? {}
         : {cursor: {id: options.cursor}, skip: 1}),
-      include: {category: true},
+      include: rideInclude,
     });
     const hasMore = rides.length > options.limit;
-    const items = rides.slice(0, options.limit).map(toBookingRide);
+    const items = rides.slice(0, options.limit).map((ride) =>
+      toBookingRide(ride),
+    );
     return {
       items,
       nextCursor: hasMore ? items[items.length - 1]?.id ?? null : null,
@@ -194,7 +231,7 @@ export class PrismaBookingRepository extends BookingRepository {
       const ride = await transaction.ride.update({
         where: { id: existingRide.id },
         data: { state: change.toState },
-        include: { category: true },
+        include: rideInclude,
       });
       await transaction.rideStateTransition.create({
         data: {

@@ -92,6 +92,24 @@ class _RiderRideDetailScreenState extends State<RiderRideDetailScreen> {
                   ride.scheduledPickupAt ?? ride.requestedAt,
                 ),
               ),
+              if (ride.estimatedFareMinor != null)
+                _DetailRow(
+                  label: 'Estimated fare',
+                  value: _formatFare(
+                    ride.estimatedFareMinor!,
+                    ride.currency ?? 'PKR',
+                  ),
+                ),
+              if (ride.paymentMethod != null)
+                _DetailRow(
+                  label: 'Payment',
+                  value: _label(ride.paymentMethod!),
+                ),
+              if (ride.farePolicyVersion != null)
+                _DetailRow(
+                  label: 'Fare policy',
+                  value: 'Policy version ${ride.farePolicyVersion}',
+                ),
               _DetailRow(label: 'Ride ID', value: ride.id),
             ],
           );
@@ -181,4 +199,8 @@ String _formatTimestamp(String value) {
       '${timestamp.month.toString().padLeft(2, '0')}/${timestamp.year} '
       '${timestamp.hour.toString().padLeft(2, '0')}:'
       '${timestamp.minute.toString().padLeft(2, '0')}';
+}
+
+String _formatFare(int amountMinor, String currency) {
+  return '$currency ${(amountMinor / 100).toStringAsFixed(2)}';
 }
