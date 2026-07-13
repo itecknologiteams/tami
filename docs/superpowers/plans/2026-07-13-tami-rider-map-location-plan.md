@@ -35,7 +35,7 @@
 - [x] **Step 2: Run the seed test to verify RED** with `pnpm --filter @tami/api exec vitest run prisma/seed.spec.ts`; expect failure because map profile fields do not exist.
 - [x] **Step 3: Add the Prisma fields, SQL migration, and explicit city profiles** for Karachi, Hyderabad, Sukkur, Larkana, and Mirpur Khas.
 - [x] **Step 4: Generate Prisma and verify GREEN** with `pnpm --filter @tami/api prisma:generate` and the focused seed test.
-- [ ] **Step 5: Commit** with `git commit -m "feat: add city map profiles"`.
+- [x] **Step 5: Commit** with `git commit -m "feat: add city map profiles"`.
 
 ### Task 2: Backend Place Search
 
@@ -55,13 +55,13 @@
 - Produces: `RiderSearchPlace { id, name, address, latitude, longitude, cityId }`.
 - Consumes: authenticated rider `cityId` and the corresponding Prisma city map profile.
 
-- [ ] **Step 1: Write failing provider tests** for URL encoding, `country=pk`, city `bbox`, `proximity`, bounded result count, reverse-geocode URL, timeout, malformed responses, and provider errors.
-- [ ] **Step 2: Run the provider test to verify RED**; expect missing provider classes.
-- [ ] **Step 3: Implement `GeocodingProvider` and `MapTilerGeocodingProvider`** using injected fetch, `AbortSignal.timeout(5000)`, `TAMI_MAPTILER_API_KEY`, and strict response parsing.
-- [ ] **Step 4: Run provider tests to verify GREEN**.
-- [ ] **Step 5: Write failing service/controller tests** for two-character query validation, rider-city scoping, out-of-bounds reverse lookup, auth guard metadata, and stable result mapping.
-- [ ] **Step 6: Implement the city repository query, service, controller, and Nest registration** without accepting a client city ID.
-- [ ] **Step 7: Run all place/API tests and typecheck** with `pnpm --filter @tami/api test` and `pnpm --filter @tami/api typecheck`.
+- [x] **Step 1: Write failing provider tests** for URL encoding, `country=pk`, city `bbox`, `proximity`, bounded result count, reverse-geocode URL, timeout, malformed responses, and provider errors.
+- [x] **Step 2: Run the provider test to verify RED**; expect missing provider classes.
+- [x] **Step 3: Implement `GeocodingProvider` and `MapTilerGeocodingProvider`** using injected fetch, `AbortSignal.timeout(5000)`, `TAMI_MAPTILER_API_KEY`, and strict response parsing.
+- [x] **Step 4: Run provider tests to verify GREEN**.
+- [x] **Step 5: Write failing service/controller tests** for two-character query validation, rider-city scoping, out-of-bounds reverse lookup, auth guard metadata, and stable result mapping.
+- [x] **Step 6: Implement the city repository query, service, controller, and Nest registration** without accepting a client city ID.
+- [x] **Step 7: Run all place/API tests and typecheck** with `pnpm --filter @tami/api test` and `pnpm --filter @tami/api typecheck`.
 - [ ] **Step 8: Commit** with `git commit -m "feat: add rider place search"`.
 
 ### Task 3: OSRM Routing and Fare Geometry
