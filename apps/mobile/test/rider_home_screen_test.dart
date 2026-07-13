@@ -8,6 +8,7 @@ import 'package:tami_mobile/src/features/rider/rider_ride_query_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_saved_place_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_pricing_client.dart';
 import 'package:tami_mobile/src/features/rider/rider_place_search_client.dart';
+import 'package:tami_mobile/src/maps/tami_map_surface.dart';
 import 'package:tami_mobile/src/ui/tami_route_ribbon.dart';
 import 'package:tami_mobile/src/location/rider_location.dart';
 import 'package:tami_mobile/src/location/rider_location_client.dart';
@@ -341,6 +342,32 @@ void main() {
     expect(find.text('Policy version 1'), findsOneWidget);
   });
 
+  testWidgets('propagates the priced road route to the map', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: RiderHomeScreen(
+          session: _session,
+          pricingClient: _PricingClient(),
+          placeSearchClient: const _PlaceSearchClient(),
+          initialPickup: _karachiPickup,
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('Where to?'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('place-search')), 'Mazar');
+    await tester.pump(const Duration(milliseconds: 350));
+    await tester.pump();
+    await tester.tap(find.text('Mazar-e-Quaid'));
+    await tester.pumpAndSettle();
+
+    final map = tester.widget<TamiMapSurface>(find.byType(TamiMapSurface));
+    expect(map.viewState.pickup?.latitude, _karachiPickup.latitude);
+    expect(map.viewState.destination?.latitude, 24.8753);
+    expect(map.viewState.routeCoordinates, hasLength(3));
+  });
+
   testWidgets('disables confirmation while fare pricing is unavailable', (
     tester,
   ) async {
@@ -614,7 +641,13 @@ class _PricingClient implements RiderPricingClient {
       policyVersion: 1,
       distanceMeters: 6200,
       durationSeconds: 930,
-      routeMethod: 'great_circle_road_factor_v1',
+      routeMethod: 'osrm_v1',
+      routeProvider: 'osrm',
+      routeCoordinates: [
+        RiderRouteCoordinate(latitude: 24.835, longitude: 67.03),
+        RiderRouteCoordinate(latitude: 24.85, longitude: 67.02),
+        RiderRouteCoordinate(latitude: 24.8742, longitude: 67.0409),
+      ],
       multiplier: 1,
       capApplied: false,
       breakdown: RiderFareBreakdown(

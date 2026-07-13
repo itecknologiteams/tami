@@ -52,6 +52,38 @@ class RiderFareBreakdown {
   }
 }
 
+class RiderRouteCoordinate {
+  const RiderRouteCoordinate({required this.latitude, required this.longitude});
+
+  final double latitude;
+  final double longitude;
+
+  factory RiderRouteCoordinate.fromJson(Object? value) {
+    if (value is! Map<String, dynamic>) {
+      throw const FormatException('Invalid route coordinate');
+    }
+    final latitude = value['latitude'];
+    final longitude = value['longitude'];
+    if (latitude is! num || longitude is! num) {
+      throw const FormatException('Invalid route coordinate');
+    }
+    final parsedLatitude = latitude.toDouble();
+    final parsedLongitude = longitude.toDouble();
+    if (!parsedLatitude.isFinite ||
+        !parsedLongitude.isFinite ||
+        parsedLatitude < -90 ||
+        parsedLatitude > 90 ||
+        parsedLongitude < -180 ||
+        parsedLongitude > 180) {
+      throw const FormatException('Invalid route coordinate');
+    }
+    return RiderRouteCoordinate(
+      latitude: parsedLatitude,
+      longitude: parsedLongitude,
+    );
+  }
+}
+
 class RiderFareEstimate {
   const RiderFareEstimate({
     required this.fareMinor,
@@ -61,6 +93,8 @@ class RiderFareEstimate {
     required this.distanceMeters,
     required this.durationSeconds,
     required this.routeMethod,
+    required this.routeProvider,
+    required this.routeCoordinates,
     required this.multiplier,
     required this.capApplied,
     required this.breakdown,
@@ -74,12 +108,24 @@ class RiderFareEstimate {
   final int distanceMeters;
   final int durationSeconds;
   final String routeMethod;
+  final String routeProvider;
+  final List<RiderRouteCoordinate> routeCoordinates;
   final double multiplier;
   final bool capApplied;
   final RiderFareBreakdown breakdown;
   final List<String> explanationLines;
 
   factory RiderFareEstimate.fromJson(Map<String, dynamic> json) {
+    final routeMethod = json['routeMethod'];
+    final routeProvider = json['routeProvider'];
+    final routeCoordinates = json['routeCoordinates'];
+    if (routeMethod != 'osrm_v1' ||
+        routeProvider is! String ||
+        routeProvider.trim().isEmpty ||
+        routeCoordinates is! List<dynamic> ||
+        routeCoordinates.length < 2) {
+      throw const FormatException('Invalid route geometry');
+    }
     return RiderFareEstimate(
       fareMinor: json['fareMinor'] as int,
       currency: json['currency'] as String,
@@ -87,7 +133,11 @@ class RiderFareEstimate {
       policyVersion: json['policyVersion'] as int,
       distanceMeters: json['distanceMeters'] as int,
       durationSeconds: json['durationSeconds'] as int,
-      routeMethod: json['routeMethod'] as String,
+      routeMethod: routeMethod,
+      routeProvider: routeProvider,
+      routeCoordinates: List.unmodifiable(
+        routeCoordinates.map(RiderRouteCoordinate.fromJson),
+      ),
       multiplier: (json['multiplier'] as num).toDouble(),
       capApplied: json['capApplied'] as bool,
       breakdown: RiderFareBreakdown.fromJson(

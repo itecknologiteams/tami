@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
 import '../../maps/tami_map_surface.dart';
+import '../../maps/tami_map_view_state.dart';
 import '../../location/rider_location.dart';
 import '../../location/rider_location_client.dart';
 import '../../ui/tami_colors.dart';
@@ -60,6 +61,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   TamiPlace? _pickup;
   RiderBookingRide? _activeRide;
   List<RiderSavedPlace> _savedPlaces = const [];
+  List<TamiMapCoordinate> _routeCoordinates = const [];
   RiderLocationStatus _pickupStatus = RiderLocationStatus.failed;
   bool _isLocatingPickup = false;
 
@@ -88,7 +90,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final locationClient = widget.locationClient;
     final placeSearchClient = widget.placeSearchClient;
     final accessToken = widget.session?.accessToken;
-    if (locationClient == null || placeSearchClient == null || accessToken == null) {
+    if (locationClient == null ||
+        placeSearchClient == null ||
+        accessToken == null) {
       return;
     }
     setState(() => _isLocatingPickup = true);
@@ -100,6 +104,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       setState(() {
         _pickup = null;
         _pickupStatus = result.status;
+        _routeCoordinates = const [];
         _isLocatingPickup = false;
       });
       return;
@@ -115,6 +120,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         setState(() {
           _pickup = place;
           _pickupStatus = RiderLocationStatus.ready;
+          _routeCoordinates = const [];
           _isLocatingPickup = false;
         });
       }
@@ -123,6 +129,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         setState(() {
           _pickup = null;
           _pickupStatus = RiderLocationStatus.failed;
+          _routeCoordinates = const [];
           _isLocatingPickup = false;
         });
       }
@@ -183,6 +190,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         );
         _pickupStatus = RiderLocationStatus.ready;
         _isLocatingPickup = false;
+        _routeCoordinates = const [];
       });
     } on RiderRideQueryException {
       // The booking surface remains available; reconnect recovery follows later.
@@ -217,7 +225,10 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       return;
     }
 
-    setState(() => _destination = destination);
+    setState(() {
+      _destination = destination;
+      _routeCoordinates = const [];
+    });
     _openRideOptions(destination);
   }
 
@@ -252,6 +263,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       _pickup = pickup;
       _pickupStatus = RiderLocationStatus.ready;
       _isLocatingPickup = false;
+      _routeCoordinates = const [];
     });
   }
 
@@ -263,7 +275,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
     final pickup = _pickup;
     if (pickup == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Choose a pickup before selecting a ride.')),
+        const SnackBar(
+          content: Text('Choose a pickup before selecting a ride.'),
+        ),
       );
       return;
     }
@@ -280,9 +294,26 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
         ),
         accessToken: widget.session?.accessToken,
         pricingClient: widget.pricingClient,
+        onEstimate: _showEstimatedRoute,
         onConfirm: _requestRide,
       ),
     );
+  }
+
+  void _showEstimatedRoute(RiderFareEstimate estimate) {
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _routeCoordinates = estimate.routeCoordinates
+          .map(
+            (coordinate) => TamiMapCoordinate(
+              latitude: coordinate.latitude,
+              longitude: coordinate.longitude,
+            ),
+          )
+          .toList(growable: false);
+    });
   }
 
   Future<void> _requestRide(RideSelection selection) async {
@@ -355,6 +386,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       setState(() {
         _activeRide = null;
         _destination = null;
+        _routeCoordinates = const [];
       });
       ScaffoldMessenger.of(
         context,
@@ -395,7 +427,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
           Positioned.fill(
             child: RepaintBoundary(
               key: const Key('rider-map'),
-              child: widget.mapSurface ?? const TamiMapSurface(),
+              child:
+                  widget.mapSurface ?? TamiMapSurface(viewState: _mapViewState),
             ),
           ),
           SafeArea(
@@ -405,7 +438,9 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
                 children: [
                   Row(
                     children: [
-                      _CityPill(cityName: widget.session?.rider.cityName ?? 'Sindh'),
+                      _CityPill(
+                        cityName: widget.session?.rider.cityName ?? 'Sindh',
+                      ),
                       const Spacer(),
                       TamiGlass(
                         key: const Key('rider-safety-glass'),
@@ -454,6 +489,22 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       ),
     );
   }
+
+  TamiMapViewState get _mapViewState => TamiMapViewState(
+    pickup: _pickup == null
+        ? null
+        : TamiMapCoordinate(
+            latitude: _pickup!.latitude,
+            longitude: _pickup!.longitude,
+          ),
+    destination: _destination == null
+        ? null
+        : TamiMapCoordinate(
+            latitude: _destination!.latitude,
+            longitude: _destination!.longitude,
+          ),
+    routeCoordinates: _routeCoordinates,
+  );
 }
 
 class _CityPill extends StatelessWidget {

@@ -29,6 +29,7 @@ class RideOptionsSheet extends StatefulWidget {
     required this.pickup,
     this.accessToken,
     this.pricingClient,
+    this.onEstimate,
     super.key,
   });
 
@@ -37,6 +38,7 @@ class RideOptionsSheet extends StatefulWidget {
   final RiderCoordinates pickup;
   final String? accessToken;
   final RiderPricingClient? pricingClient;
+  final ValueChanged<RiderFareEstimate>? onEstimate;
 
   @override
   State<RideOptionsSheet> createState() => _RideOptionsSheetState();
@@ -89,6 +91,7 @@ class _RideOptionsSheetState extends State<RideOptionsSheet> {
       );
       if (mounted && requestNumber == _estimateRequest) {
         setState(() => _estimate = estimate);
+        widget.onEstimate?.call(estimate);
       }
     } on RiderPricingException catch (error) {
       if (mounted && requestNumber == _estimateRequest) {

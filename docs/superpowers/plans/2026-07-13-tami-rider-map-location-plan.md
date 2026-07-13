@@ -167,7 +167,7 @@
 - [x] **Step 4: Run the focused Flutter tests to verify RED**.
 - [x] **Step 5: Implement pickup state orchestration and booking composer controls**; keep confirmation inaccessible until explicit pickup and destination exist.
 - [x] **Step 6: Run auth, rider-home, and full Flutter tests to verify GREEN**.
-- [ ] **Step 7: Commit** with `git commit -m "feat: add city aware rider pickup"`.
+- [x] **Step 7: Commit** with `git commit -m "feat: add city aware rider pickup"`.
 
 ### Task 7: Route-Aware Map Surface
 
@@ -188,13 +188,13 @@
 - Changes: `TamiMapSurface(viewState: ...)` renders markers and route.
 - Changes: `RiderFareEstimate` parses route geometry and `RideOptionsSheet.onEstimate` sends it to home.
 
-- [ ] **Step 1: Write failing model/client tests** for route coordinate parsing, invalid geometry rejection, and bounds across all points.
-- [ ] **Step 2: Run focused tests to verify RED**.
-- [ ] **Step 3: Implement map state and fare geometry parsing**.
-- [ ] **Step 4: Write failing fallback/home widget tests** showing pickup/destination markers, route paint state, and estimate-to-map propagation.
-- [ ] **Step 5: Implement native MapLibre `PolylineLayer`, `CircleLayer`, marker widgets, camera fitting, recenter control, and matching painted fallback**.
-- [ ] **Step 6: Connect home state and ride options estimate callback**.
-- [ ] **Step 7: Run all Flutter tests and analyze to verify GREEN**.
+- [x] **Step 1: Write failing model/client tests** for route coordinate parsing, invalid geometry rejection, and bounds across all points.
+- [x] **Step 2: Run focused tests to verify RED**.
+- [x] **Step 3: Implement map state and fare geometry parsing**.
+- [x] **Step 4: Write failing fallback/home widget tests** showing pickup/destination markers, route paint state, and estimate-to-map propagation.
+- [x] **Step 5: Implement native MapLibre `PolylineLayer`, `CircleLayer`, marker widgets, camera fitting, recenter control, and matching painted fallback**.
+- [x] **Step 6: Connect home state and ride options estimate callback**.
+- [x] **Step 7: Run all Flutter tests and analyze to verify GREEN**.
 - [ ] **Step 8: Commit** with `git commit -m "feat: render rider road routes"`.
 
 ### Task 8: End-to-End Verification and Preview
