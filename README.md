@@ -62,6 +62,21 @@ cd apps/mobile
 flutter run --target lib/main_rider.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
 ```
 
+Place search and reverse geocoding run through the API. Development uses the bounded Sindh landmark fallback when no MapTiler key is present. Production must provide server-side provider settings:
+
+```bash
+TAMI_MAPTILER_API_KEY=<server-secret> \
+TAMI_ROUTING_BASE_URL=https://routing.example.gov.pk \
+pnpm --filter @tami/api dev
+```
+
+`TAMI_MAPTILER_API_KEY` must never be passed as a Flutter `dart-define`. Native builds receive only the approved restricted public style URL:
+
+```bash
+flutter build apk --target lib/main_rider.dart \
+  --dart-define=TAMI_MAP_STYLE_URL='https://api.maptiler.com/maps/streets-v2/style.json?key=<restricted-public-key>'
+```
+
 For the browser development preview, build with the same API override and serve the generated files:
 
 ```bash
@@ -71,6 +86,8 @@ python3 -m http.server 4174 --directory build/web
 ```
 
 The web preview uses a non-GL static map fallback. Android and iOS use MapLibre through Flutter; provide the approved style endpoint with `TAMI_MAP_STYLE_URL` for native map builds.
+
+MapLibre iOS uses Swift Package Manager and requires iOS 13 or newer. The project enables SwiftPM in `pubspec.yaml` and pins the upstream `package_info_plus` iOS 13 manifest correction until that fix is published. Build workspaces outside macOS-synchronized File Provider folders; otherwise generated frameworks can inherit metadata that Apple codesign rejects.
 
 The first Prisma schema defines cities, zones, ride categories, riders, drivers, vehicles, rides, ride state transition audit records, and payment records.
 
@@ -115,8 +132,8 @@ Build entry points:
 
 ```bash
 cd apps/mobile && flutter build apk --target lib/main_rider.dart
-cd apps/mobile && flutter build ios --target lib/main_rider.dart
+cd apps/mobile && flutter build ios --target lib/main_rider.dart --no-codesign
 cd apps/mobile && flutter build apk --target lib/main_driver.dart
 ```
 
-The rider app targets Android and iOS. The driver app targets Android infotainment devices.
+Android builds require `ANDROID_HOME` to point to an installed Android SDK. The rider app targets Android and iOS 13+. The driver app targets Android infotainment devices.

@@ -49,11 +49,22 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
 
+# The released 10.2.0 SwiftPM manifest still targets iOS 12 while Flutter 3.41
+# requires iOS 13. Pin the upstream manifest correction until its next release.
+dependency_overrides:
+  package_info_plus:
+    git:
+      url: https://github.com/fluttercommunity/plus_plugins.git
+      ref: bf04cdf66598dc3fca274b8b1db2b92b0bf6b73e
+      path: packages/package_info_plus/package_info_plus
+
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter packages.
 flutter:
+  config:
+    enable-swift-package-manager: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

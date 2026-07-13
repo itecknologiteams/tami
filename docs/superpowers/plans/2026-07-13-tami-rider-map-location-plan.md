@@ -195,7 +195,7 @@
 - [x] **Step 5: Implement native MapLibre `PolylineLayer`, `CircleLayer`, marker widgets, camera fitting, recenter control, and matching painted fallback**.
 - [x] **Step 6: Connect home state and ride options estimate callback**.
 - [x] **Step 7: Run all Flutter tests and analyze to verify GREEN**.
-- [ ] **Step 8: Commit** with `git commit -m "feat: render rider road routes"`.
+- [x] **Step 8: Commit** with `git commit -m "feat: render rider road routes"`.
 
 ### Task 8: End-to-End Verification and Preview
 
@@ -207,10 +207,11 @@
 **Interfaces:**
 - Produces: documented production and development environment contracts and a verified preview URL.
 
-- [ ] **Step 1: Run API unit and integration suites** including a clean migration/seed against `postgresql://tami:tami@127.0.0.1:5434/tami`.
-- [ ] **Step 2: Run API typecheck/build** and confirm no provider secret appears in generated output.
+- [x] **Step 1: Run API unit and integration suites** including a clean migration/seed against `postgresql://tami:tami@127.0.0.1:5434/tami`.
+- [x] **Step 2: Run API typecheck/build** and confirm no provider secret appears in generated output.
 - [ ] **Step 3: Run Flutter tests, analyze, Android debug build, and web build** with explicit API/map environment values.
-- [ ] **Step 4: Rebuild and serve the browser preview** and verify OTP, profile, current/manual pickup, live destination search, fare, route drawing, immediate ride, and scheduled ride.
-- [ ] **Step 5: Check browser logs and responsive layouts** at mobile and wide viewports.
-- [ ] **Step 6: Update the completion checklist and provider setup documentation with verified commands**.
-- [ ] **Step 7: Commit** with `git commit -m "docs: verify rider map booking flow"`.
+  - Flutter tests, analysis, web build, and iOS simulator build pass. Android remains blocked on this workstation because no Android SDK is installed.
+- [x] **Step 4: Rebuild and serve the browser preview** and verify OTP, profile, current/manual pickup, live destination search, fare, route drawing, immediate ride, and scheduled ride.
+- [x] **Step 5: Check browser logs and responsive layouts** at mobile and wide viewports.
+- [x] **Step 6: Update the completion checklist and provider setup documentation with verified commands**.
+- [x] **Step 7: Commit** with `git commit -m "docs: verify rider map booking flow"`.

@@ -54,7 +54,7 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
 
 ### Mobile Apps
 
-- Framework: Flutter with Dart.
+- Framework: Flutter `3.41.3` with Dart `3.11.1`.
 - Structure: one Flutter project at `apps/mobile`.
 - App variants:
   - Rider app: Android and iOS.
@@ -74,9 +74,11 @@ This document is the technical guardrail for Tami Hailing. Any major deviation s
   - rider booking workflow
   - driver ride-offer workflow
   - driver in-dash UX
-- State management: Riverpod or Bloc, to be finalized before mobile implementation starts.
-- Routing: go_router or Flutter Navigator 2.0, to be finalized before mobile implementation starts.
+- State management: explicit immutable models, injected clients, and local widget state for the current rider slice. Introduce Riverpod only when shared live trip state requires cross-screen ownership.
+- Routing: Flutter Navigator and typed feature screens for the current flow. Reassess `go_router` before deep links and production notification routing.
 - Native builds must support MapLibre maps, production push notifications, location permissions, and Android driver-device deployment.
+- iOS deployment target: iOS 13+ with Flutter Swift Package Manager integration enabled in `pubspec.yaml`.
+- Temporary compatibility pin: `package_info_plus` is locked to upstream commit `bf04cdf66598dc3fca274b8b1db2b92b0bf6b73e`, which aligns its SwiftPM manifest with Flutter 3.41's iOS 13 framework. Remove the override after an equivalent pub.dev release is verified.
 
 ### Driver App UX
 

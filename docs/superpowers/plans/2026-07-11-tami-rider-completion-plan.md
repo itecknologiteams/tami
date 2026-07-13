@@ -24,18 +24,18 @@
 ### Proven Working
 
 - Development OTP onboarding, bearer sessions, profile update, city selection.
-- Native MapLibre surface and non-GL browser preview fallback.
-- Destination search prototype, category selection, immediate/scheduled booking request, rider cancellation.
+- Device/current and manual pickup with explicit permission/service recovery states.
+- Authenticated city-bounded place search and reverse geocoding with saved places.
+- Native MapLibre route/marker surface and non-GL browser preview fallback.
+- OSRM road route, authoritative server fare, policy explanation, category selection, immediate/scheduled booking request, rider cancellation, and persisted payment selection.
 - Strict domain transition tests, persisted chat messages, accepted-state chat UI.
-- Flutter unit/widget suite and API unit/type checks pass.
+- Flutter unit/widget suite, API unit/type checks, and Postgres integration tests pass.
 
 ### Not Complete
 
-- Pickup is a hardcoded Frere Hall coordinate; destinations are a local sample list.
-- The city label is hardcoded to Karachi and no service-area validation exists.
-- Fare values are local constants. No server-side estimate, dynamic policy, route distance, or fare explanation exists.
-- Selected payment method is not sent to the server or persisted as a payment intent.
-- No rider current-ride, ride-detail, upcoming, history, receipt, rating, complaint, saved-place, payment-method, or settings API exists.
+- Service-area polygon validation and map-pin correction are not complete.
+- Active categories and availability rules are not yet loaded from the API.
+- No receipt, rating, complaint, payment-method management, or settings API exists.
 - Trips and account actions are placeholders.
 - Active ride state is not fetched/resynced; no driver identity or live driver location exists.
 - Chat is text-only, lacks quick messages, delivery/read state, push/realtime updates, and closure handling.
@@ -48,10 +48,10 @@
 
 **Files:** Current uncommitted rider, API, chat, map, schema, documentation, and test files.
 
-- [ ] Re-run Flutter tests/analyze, API tests/typecheck, and database integration tests with Tami's explicit database URL.
+- [x] Re-run Flutter tests/analyze, API tests/typecheck, and database integration tests with Tami's explicit database URL.
 - [ ] Add controller-level tests for chat and rider cancellation authorization.
 - [ ] Verify the chat migration applies from a clean database and the server starts with `DATABASE_URL=postgresql://tami:tami@127.0.0.1:5434/tami`.
-- [ ] Rebuild the browser preview and manually complete phone, profile, booking, cancellation, and chat mocked-state flows.
+- [x] Rebuild the browser preview and manually complete phone, profile, booking, cancellation, and chat mocked-state flows.
 - [ ] Remove generated preview screenshots and `.playwright-mcp` artifacts from the working tree.
 - [ ] Commit the stabilized slice before broader rider work begins.
 
@@ -76,11 +76,11 @@
 
 **Flutter modules:** split `rider_home_screen.dart` into booking state, pickup/destination search, ride options, and estimate components.
 
-- [ ] Add location permission and current-location pickup with manual correction, map pin placement, and city/service-area handling.
-- [ ] Replace local destination samples with geocoding/place-search adapter results and saved places.
-- [ ] Add rider city context based on profile, selected city, and pickup validation; remove hardcoded Karachi copy and coordinates.
+- [x] Add location permission and current-location pickup with manual correction and explicit retry/settings states.
+- [x] Replace local destination samples with geocoding/place-search adapter results and saved places.
+- [x] Add rider city context based on profile and selected city; remove hardcoded Karachi copy and coordinates.
 - [ ] Load active categories and availability rules from the API.
-- [ ] Load server fare estimate after pickup, destination, category, and schedule changes; show a policy explanation and payment method.
+- [x] Load server fare estimate after pickup, destination, category, and schedule changes; show a policy explanation and payment method.
 - [ ] Implement immediate and scheduled confirmation summaries, schedule validation, request idempotency, and clear failure/retry states.
 - [ ] Persist successful booking and switch directly to the restored current-ride view.
 
