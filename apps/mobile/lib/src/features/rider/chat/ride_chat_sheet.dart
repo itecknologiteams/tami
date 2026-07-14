@@ -9,12 +9,18 @@ class RideChatSheet extends StatefulWidget {
     required this.accessToken,
     required this.rideId,
     required this.chatClient,
+    this.ownSenderType = 'rider',
+    this.title = 'Chat with driver',
+    this.inputHint = 'Message driver',
     super.key,
   });
 
   final String accessToken;
   final String rideId;
   final RiderChatClient chatClient;
+  final String ownSenderType;
+  final String title;
+  final String inputHint;
 
   @override
   State<RideChatSheet> createState() => _RideChatSheetState();
@@ -100,7 +106,7 @@ class _RideChatSheetState extends State<RideChatSheet> {
           constraints: const BoxConstraints(maxWidth: 560),
           child: TamiGlass(
             key: const Key('rider-chat-glass'),
-            semanticLabel: 'Chat with driver',
+            semanticLabel: widget.title,
             padding: EdgeInsets.zero,
             child: SizedBox(
               height: MediaQuery.sizeOf(context).height * 0.72,
@@ -114,11 +120,11 @@ class _RideChatSheetState extends State<RideChatSheet> {
                       color: const Color(0xFFB8CCC5),
                     ),
                     const SizedBox(height: 18),
-                    const Align(
+                    Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Chat with driver',
-                        style: TextStyle(
+                        widget.title,
+                        style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
@@ -134,7 +140,8 @@ class _RideChatSheetState extends State<RideChatSheet> {
                                   const SizedBox(height: 8),
                               itemBuilder: (context, index) {
                                 final message = _messages[index];
-                                final isRider = message.senderType == 'rider';
+                                final isRider =
+                                    message.senderType == widget.ownSenderType;
                                 return Align(
                                   alignment: isRider
                                       ? Alignment.centerRight
@@ -172,9 +179,9 @@ class _RideChatSheetState extends State<RideChatSheet> {
                             controller: _messageController,
                             textInputAction: TextInputAction.send,
                             onSubmitted: (_) => _sendMessage(),
-                            decoration: const InputDecoration(
-                              hintText: 'Message driver',
-                              border: OutlineInputBorder(
+                            decoration: InputDecoration(
+                              hintText: widget.inputHint,
+                              border: const OutlineInputBorder(
                                 borderRadius: BorderRadius.all(
                                   Radius.circular(8),
                                 ),

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../auth/rider_identity_client.dart';
 import '../auth/rider_onboarding_screen.dart';
-import '../features/driver/driver_home_screen.dart';
+import '../features/driver/driver_chat_client.dart';
+import '../features/driver/driver_identity_client.dart';
+import '../features/driver/driver_onboarding_screen.dart';
+import '../features/driver/driver_ride_client.dart';
 import '../features/rider/rider_booking_client.dart';
 import '../features/rider/rider_category_client.dart';
 import '../features/rider/rider_chat_client.dart';
@@ -28,6 +31,10 @@ class TamiMobileApp extends StatelessWidget {
     this.riderPricingClient,
     this.riderLocationClient,
     this.riderPlaceSearchClient,
+    this.driverIdentityClient,
+    this.driverRideClient,
+    this.driverChatClient,
+    this.driverPollInterval = const Duration(seconds: 3),
     super.key,
   });
 
@@ -41,6 +48,10 @@ class TamiMobileApp extends StatelessWidget {
   final RiderPricingClient? riderPricingClient;
   final RiderLocationClient? riderLocationClient;
   final RiderPlaceSearchClient? riderPlaceSearchClient;
+  final DriverIdentityClient? driverIdentityClient;
+  final DriverRideClient? driverRideClient;
+  final RiderChatClient? driverChatClient;
+  final Duration driverPollInterval;
 
   @override
   Widget build(BuildContext context) {
@@ -76,7 +87,18 @@ class TamiMobileApp extends StatelessWidget {
               riderPlaceSearchClient ??
               HttpRiderPlaceSearchClient(baseUrl: _apiBaseUrl),
         ),
-        TamiAppMode.driver => const DriverHomeScreen(),
+        TamiAppMode.driver => DriverOnboardingScreen(
+          identityClient:
+              driverIdentityClient ??
+              HttpDriverIdentityClient(baseUrl: _apiBaseUrl),
+          rideClient:
+              driverRideClient ?? HttpDriverRideClient(baseUrl: _apiBaseUrl),
+          chatClient:
+              driverChatClient ?? HttpDriverChatClient(baseUrl: _apiBaseUrl),
+          locationClient:
+              riderLocationClient ?? GeolocatorRiderLocationClient(),
+          pollInterval: driverPollInterval,
+        ),
       },
     );
   }

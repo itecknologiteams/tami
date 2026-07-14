@@ -9,4 +9,11 @@ export abstract class RideChatRepository {
     body: string;
     sentAt: string;
   }): Promise<RideChatMessage>;
+
+  abstract createDriverMessage(input: {
+    rideId: string;
+    driverId: string;
+    body: string;
+    sentAt: string;
+  }): Promise<RideChatMessage>;
 }

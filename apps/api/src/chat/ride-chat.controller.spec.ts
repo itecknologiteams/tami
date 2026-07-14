@@ -103,4 +103,22 @@ class InMemoryRideChatRepository extends RideChatRepository {
     this.messages.push(message);
     return message;
   }
+
+  async createDriverMessage(input: {
+    rideId: string;
+    driverId: string;
+    body: string;
+    sentAt: string;
+  }): Promise<RideChatMessage> {
+    const message: RideChatMessage = {
+      id: `message_${this.messages.length + 1}`,
+      rideId: input.rideId,
+      senderType: "driver",
+      senderId: input.driverId,
+      body: input.body,
+      sentAt: input.sentAt,
+    };
+    this.messages.push(message);
+    return message;
+  }
 }

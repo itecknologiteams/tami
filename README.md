@@ -62,15 +62,15 @@ cd apps/mobile
 flutter run --target lib/main_rider.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
 ```
 
-Place search and reverse geocoding run through the API. Development uses the bounded Sindh landmark fallback when no MapTiler key is present. Production must provide server-side provider settings:
+Place search and reverse geocoding run through the API. The production provider is a self-hosted Nominatim instance loaded with the Geofabrik Pakistan extract; `docker compose up -d nominatim` runs it locally on `http://127.0.0.1:8090` (the first start downloads and imports the extract, which takes a while — `docker compose logs -f nominatim` shows progress and `curl http://127.0.0.1:8090/status` reports `OK` once ready). Development falls back to the bounded Sindh landmark list when no provider is configured. Production must provide server-side provider settings:
 
 ```bash
-TAMI_MAPTILER_API_KEY=<server-secret> \
+TAMI_NOMINATIM_BASE_URL=http://127.0.0.1:8090 \
 TAMI_ROUTING_BASE_URL=https://routing.example.gov.pk \
 pnpm --filter @tami/api dev
 ```
 
-`TAMI_MAPTILER_API_KEY` must never be passed as a Flutter `dart-define`. Native builds receive only the approved restricted public style URL:
+`TAMI_MAPTILER_API_KEY` remains supported as an optional alternative geocoder when `TAMI_NOMINATIM_BASE_URL` is unset. Server-side keys must never be passed as a Flutter `dart-define`. Native builds receive only the approved restricted public style URL:
 
 ```bash
 flutter build apk --target lib/main_rider.dart \
@@ -95,6 +95,47 @@ For local validation without a running database:
 
 ```bash
 DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" pnpm --filter @tami/api prisma:validate
+```
+
+## Production Deployment
+
+The API ships as a Docker image built from [apps/api/Dockerfile](apps/api/Dockerfile) (build context is the repository root). The image runs `prisma migrate deploy` before starting the server, so a fresh database is migrated automatically; run `pnpm --filter @tami/api prisma:seed` once against the production `DATABASE_URL` to load launch cities and ride categories.
+
+`docker-compose.prod.yml` runs the full backend stack — PostGIS, self-hosted Nominatim (Pakistan extract), and the API:
+
+```bash
+cp .env.production.example .env   # then fill in real secrets
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+The API refuses to boot in production without `TAMI_NOMINATIM_BASE_URL` and `TAMI_ROUTING_BASE_URL`. Nominatim's first start imports the Pakistan OSM extract (roughly 30–60 minutes); the API container waits for the Nominatim healthcheck before starting. Set `TAMI_CORS_ORIGINS` to the comma-separated admin/web origins allowed to call the API; leave it empty only for development.
+
+Before promoting a build, run the full gate locally:
+
+```bash
+pnpm typecheck && pnpm test && pnpm build
+RUN_DATABASE_TESTS=true pnpm --filter @tami/api test:integration
+```
+
+The development rider OTP flow (`POST /auth/rider/otp` returning the code) must be replaced with a real OTP provider before any public launch — see the note in the rider login section above. The driver flow (`POST /auth/driver/otp` / `verify`) shares the same development-only OTP mechanism and caveat.
+
+## Driver Ride Loop
+
+Drivers sign in with the same phone/OTP/city flow (`/auth/driver/*`) and manage duty through `POST /driver/availability`. Dispatch is pull-based: `GET /driver/rides/current` returns the driver's active ride, or atomically claims the oldest waiting ride in their city (`requested → matching → offered_to_driver`). Offers are accepted (`POST /driver/rides/:id/accept`), declined back into the matching pool, or advanced through pickup and trip states to `complete`, which stamps the final fare and marks the cash payment record paid. Every transition is validated by the shared ride state machine and audited in `RideStateTransition`.
+
+While on duty the app streams `POST /driver/location` pings, renders the ride's road route from `GET /driver/rides/:id/route` on the MapLibre surface, and chats with the rider through `/driver/rides/:id/chat`. The Earnings tab reads `GET /driver/earnings` (today and last-7-days totals) and `GET /driver/rides/history`; the shell has Duty, Earnings, and Account tabs in the same liquid-glass design language as the rider app. Run the driver app with:
+
+```bash
+cd apps/mobile
+flutter run --target lib/main_driver.dart --dart-define=TAMI_API_BASE_URL=http://127.0.0.1:4000
+```
+
+## Admin Command Center
+
+`GET /admin/overview` (guarded by the `x-admin-token` header matching `TAMI_ADMIN_TOKEN`, development default `dev-admin-token`) aggregates ride counts by state, online drivers, and recent rides. The Next.js admin app proxies it server-side — set `TAMI_API_BASE_URL` and `TAMI_ADMIN_TOKEN` in its environment — and renders a live-polling dashboard:
+
+```bash
+pnpm --filter @tami/admin dev
 ```
 
 ## Stack Guardrails

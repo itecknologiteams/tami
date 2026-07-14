@@ -57,4 +57,27 @@ export class PrismaRideChatRepository extends RideChatRepository {
     });
     return toRideChatMessage(message);
   }
+
+  async createDriverMessage({
+    rideId,
+    driverId,
+    body,
+    sentAt,
+  }: {
+    rideId: string;
+    driverId: string;
+    body: string;
+    sentAt: string;
+  }): Promise<RideChatMessage> {
+    const message = await this.prisma.chatMessage.create({
+      data: {
+        rideId,
+        senderType: "driver",
+        senderId: driverId,
+        body,
+        sentAt: new Date(sentAt),
+      },
+    });
+    return toRideChatMessage(message);
+  }
 }

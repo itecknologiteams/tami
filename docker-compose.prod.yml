@@ -1,0 +1,66 @@
+# Production stack: docker compose -f docker-compose.prod.yml up -d
+# Requires a .env file next to this compose file providing:
+#   TAMI_DB_PASSWORD        strong database password
+#   TAMI_NOMINATIM_PASSWORD strong Nominatim database password
+#   TAMI_ROUTING_BASE_URL   OSRM-compatible routing service URL
+#   TAMI_ADMIN_TOKEN        secret shared with the admin command center
+#   TAMI_CORS_ORIGINS       comma-separated allowed origins (optional)
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: tami
+      POSTGRES_USER: tami
+      POSTGRES_PASSWORD: ${TAMI_DB_PASSWORD:?TAMI_DB_PASSWORD is required}
+    volumes:
+      - tami-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tami -d tami"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  nominatim:
+    image: mediagis/nominatim:5.1
+    restart: unless-stopped
+    environment:
+      PBF_URL: https://download.geofabrik.de/asia/pakistan-latest.osm.pbf
+      REPLICATION_URL: https://download.geofabrik.de/asia/pakistan-updates/
+      IMPORT_WIKIPEDIA: "false"
+      NOMINATIM_PASSWORD: ${TAMI_NOMINATIM_PASSWORD:?TAMI_NOMINATIM_PASSWORD is required}
+    volumes:
+      - tami-nominatim-data:/var/lib/postgresql/16/main
+      - tami-nominatim-flatnode:/nominatim/flatnode
+    shm_size: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/status || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 120
+      start_period: 30m
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://tami:${TAMI_DB_PASSWORD:?TAMI_DB_PASSWORD is required}@postgres:5432/tami
+      TAMI_NOMINATIM_BASE_URL: http://nominatim:8080
+      TAMI_ROUTING_BASE_URL: ${TAMI_ROUTING_BASE_URL:?TAMI_ROUTING_BASE_URL is required}
+      TAMI_ADMIN_TOKEN: ${TAMI_ADMIN_TOKEN:?TAMI_ADMIN_TOKEN is required}
+      TAMI_CORS_ORIGINS: ${TAMI_CORS_ORIGINS:-}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nominatim:
+        condition: service_healthy
+
+volumes:
+  tami-postgres-data:
+  tami-nominatim-data:
+  tami-nominatim-flatnode:

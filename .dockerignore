@@ -1,0 +1,10 @@
+**/node_modules
+**/dist
+**/.next
+**/build
+**/.env
+**/.env.*
+!**/.env.example
+apps/mobile
+docs
+.git

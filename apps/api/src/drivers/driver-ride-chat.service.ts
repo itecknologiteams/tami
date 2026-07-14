@@ -1,8 +1,12 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import type { RideState } from "@tami/shared";
-import { BookingRepository } from "../bookings/booking.repository";
-import { RideChatRepository } from "./ride-chat.repository";
-import type { RideChatMessage } from "./ride-chat.types";
+import { RideChatRepository } from "../chat/ride-chat.repository";
+import type { RideChatMessage } from "../chat/ride-chat.types";
+import { DriverRideRepository } from "./driver-ride.repository";
 
 const chatEligibleStates = new Set<RideState>([
   "accepted",
@@ -15,47 +19,47 @@ const chatEligibleStates = new Set<RideState>([
 ]);
 
 @Injectable()
-export class RideChatService {
+export class DriverRideChatService {
   constructor(
-    private readonly bookingRepository: BookingRepository,
+    private readonly rideRepository: DriverRideRepository,
     private readonly chatRepository: RideChatRepository,
   ) {}
 
-  async listRiderMessages({
+  async listDriverMessages({
     rideId,
-    riderId,
+    driverId,
   }: {
     rideId: string;
-    riderId: string;
+    driverId: string;
   }): Promise<RideChatMessage[]> {
-    await this.assertRiderCanChat(rideId, riderId);
+    await this.assertDriverCanChat(rideId, driverId);
     return this.chatRepository.listForRide(rideId);
   }
 
-  async sendRiderMessage({
+  async sendDriverMessage({
     rideId,
-    riderId,
+    driverId,
     body,
   }: {
     rideId: string;
-    riderId: string;
+    driverId: string;
     body: string;
   }): Promise<RideChatMessage> {
     const trimmedBody = typeof body === "string" ? body.trim() : "";
     if (trimmedBody.length === 0) {
       throw new BadRequestException("Message cannot be empty");
     }
-    await this.assertRiderCanChat(rideId, riderId);
-    return this.chatRepository.createRiderMessage({
+    await this.assertDriverCanChat(rideId, driverId);
+    return this.chatRepository.createDriverMessage({
       rideId,
-      riderId,
+      driverId,
       body: trimmedBody,
       sentAt: new Date().toISOString(),
     });
   }
 
-  private async assertRiderCanChat(rideId: string, riderId: string) {
-    const ride = await this.bookingRepository.findRideForRider(rideId, riderId);
+  private async assertDriverCanChat(rideId: string, driverId: string) {
+    const ride = await this.rideRepository.findRideForDriver(rideId, driverId);
     if (ride == null) {
       throw new NotFoundException("Ride not found");
     }

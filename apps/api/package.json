@@ -21,6 +21,7 @@
     "@nestjs/platform-express": "11.1.6",
     "@prisma/client": "6.19.2",
     "@tami/shared": "workspace:*",
+    "prisma": "6.19.2",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
@@ -28,7 +29,6 @@
     "@nestjs/cli": "11.0.10",
     "@nestjs/testing": "11.1.6",
     "@types/node": "24.10.1",
-    "prisma": "6.19.2",
     "tsx": "4.20.6",
     "typescript": "5.9.3",
     "vitest": "3.2.4"
