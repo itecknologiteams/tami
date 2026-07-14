@@ -7,12 +7,14 @@ import {
   RiderPaymentMethod,
 } from "./booking.types";
 import { PricingService } from "../pricing/pricing.service";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 
 @Injectable()
 export class BookingService {
   constructor(
     private readonly bookingRepository: BookingRepository,
     private readonly pricingService: PricingService,
+    private readonly realtimeEventBus: RealtimeEventBus,
   ) {}
 
   async createRide(request: CreateRideForRiderRequest): Promise<BookingRide> {
@@ -39,7 +41,7 @@ export class BookingService {
         : {scheduledPickupAt: request.scheduledPickupAt}),
     });
     const requestedAt = new Date().toISOString();
-    return this.bookingRepository.createRideWithInitialTransition(
+    const ride = await this.bookingRepository.createRideWithInitialTransition(
       {
         ...request,
         estimatedFareMinor: estimate.fareMinor,
@@ -52,6 +54,14 @@ export class BookingService {
       },
       requestedAt,
     );
+    this.realtimeEventBus.publish("ride.state_changed", {
+      rideId: ride.id,
+      riderId: ride.riderId,
+      driverId: ride.driverId,
+      state: ride.state,
+      occurredAt: requestedAt,
+    });
+    return ride;
   }
 
   async cancelRide({
@@ -76,13 +86,23 @@ export class BookingService {
       occurredAt,
       source: "rider_app",
     });
-    return this.bookingRepository.changeRideStateForRider({
+    const updated = await this.bookingRepository.changeRideStateForRider({
       rideId,
       riderId,
       fromState: transition.from,
       toState: transition.to,
       occurredAt,
     });
+    if (updated != null) {
+      this.realtimeEventBus.publish("ride.state_changed", {
+        rideId: updated.id,
+        riderId: updated.riderId,
+        driverId: updated.driverId,
+        state: updated.state,
+        occurredAt,
+      });
+    }
+    return updated;
   }
 }
 

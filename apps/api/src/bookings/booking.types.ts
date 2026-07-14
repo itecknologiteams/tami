@@ -47,6 +47,7 @@ export type BookingRide = {
   id: string;
   cityId: string;
   riderId: string;
+  driverId: string | null;
   categoryCode: RideCategoryCode;
   state: RideState;
   pickup: Coordinates;

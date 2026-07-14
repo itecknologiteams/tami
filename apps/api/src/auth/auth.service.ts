@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from "@nestjs/common";
 import { createHash, randomBytes } from "node:crypto";
 import { AuthRepository } from "./auth.repository";
 import {
@@ -69,6 +74,14 @@ export class AuthService {
     }
 
     return rider;
+  }
+
+  async registerDeviceToken(riderId: string, deviceToken: string): Promise<void> {
+    const trimmedToken = deviceToken.trim();
+    if (trimmedToken.length === 0) {
+      throw new BadRequestException("Device token is required");
+    }
+    await this.repository.registerDeviceToken(riderId, trimmedToken);
   }
 
   private toProfile(rider: RiderProfile): RiderProfile {

@@ -1,9 +1,16 @@
 import { describe, expect, it, vi } from "vitest";
 import { AuthenticatedDriver } from "../auth/driver-auth.types";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { RoutingService } from "../routing/routing.service";
 import { DriverRideService } from "./driver-ride.service";
 import { InMemoryDriverRideRepository } from "./in-memory-driver-ride.repository";
 import { DriverRideView } from "./driver-ride.types";
+
+function createFakeEventBus() {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus & {
+    publish: ReturnType<typeof vi.fn>;
+  };
+}
 
 const stubRoute = {
   distanceMeters: 5200,
@@ -50,13 +57,14 @@ function waitingRide(overrides: Partial<DriverRideView> = {}): DriverRideView {
 async function onlineService(rides: DriverRideView[] = [waitingRide()]) {
   const repository = new InMemoryDriverRideRepository();
   repository.rides.push(...rides);
-  const service = new DriverRideService(repository, stubRoutingService());
+  const eventBus = createFakeEventBus();
+  const service = new DriverRideService(repository, stubRoutingService(), eventBus);
   await service.updateAvailability(driver, {
     online: true,
     latitude: 24.87,
     longitude: 67.02,
   });
-  return {repository, service};
+  return {repository, service, eventBus};
 }
 
 describe("DriverRideService", () => {
@@ -91,7 +99,11 @@ describe("DriverRideService", () => {
   it("does not offer rides to an offline driver", async () => {
     const repository = new InMemoryDriverRideRepository();
     repository.rides.push(waitingRide());
-    const service = new DriverRideService(repository, stubRoutingService());
+    const service = new DriverRideService(
+      repository,
+      stubRoutingService(),
+      createFakeEventBus(),
+    );
 
     const ride = await service.getCurrentRide(driver);
 
@@ -237,6 +249,149 @@ describe("DriverRideService", () => {
     await expect(service.getRideRoute(driver, "ride_missing")).rejects.toThrow(
       "Ride not found for this driver",
     );
+  });
+
+  it("publishes a ride.offer event when a ride is offered to a driver", async () => {
+    const {service, eventBus} = await onlineService();
+
+    const offered = await service.getCurrentRide(driver);
+
+    expect(eventBus.publish).toHaveBeenCalledWith("ride.offer", {
+      rideId: offered!.id,
+      driverId: "driver_1",
+    });
+  });
+
+  it("does not publish a ride.offer event when no ride is available", async () => {
+    const {service, eventBus} = await onlineService([]);
+
+    await service.getCurrentRide(driver);
+
+    expect(eventBus.publish).not.toHaveBeenCalledWith(
+      "ride.offer",
+      expect.anything(),
+    );
+  });
+
+  it("publishes ride.state_changed when a driver accepts a ride", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    eventBus.publish.mockClear();
+
+    await service.acceptRide(driver, offered!.id);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: offered!.id,
+        riderId: "rider_1",
+        driverId: "driver_1",
+        state: "accepted",
+      }),
+    );
+  });
+
+  it("publishes ride.state_changed when a driver declines an offer", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    eventBus.publish.mockClear();
+
+    await service.declineRide(driver, offered!.id);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: offered!.id,
+        state: "matching",
+        driverId: null,
+      }),
+    );
+  });
+
+  it("publishes ride.state_changed on each advance step", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    await service.acceptRide(driver, offered!.id);
+    eventBus.publish.mockClear();
+
+    await service.advanceRide(driver, offered!.id, "driver_en_route_to_pickup");
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: offered!.id,
+        state: "driver_en_route_to_pickup",
+      }),
+    );
+  });
+
+  it("publishes ride.state_changed when a driver cancels", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    await service.acceptRide(driver, offered!.id);
+    eventBus.publish.mockClear();
+
+    await service.cancelRide(driver, offered!.id);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: offered!.id,
+        state: "cancelled_by_driver",
+      }),
+    );
+  });
+
+  it("publishes ride.state_changed for both payment_pending and completed", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    await service.acceptRide(driver, offered!.id);
+    for (const state of [
+      "driver_en_route_to_pickup",
+      "arrived_at_pickup",
+      "rider_onboarded",
+      "in_progress",
+      "arrived_at_destination",
+    ]) {
+      await service.advanceRide(driver, offered!.id, state);
+    }
+    eventBus.publish.mockClear();
+
+    await service.completeRide(driver, offered!.id);
+
+    const publishedStates = eventBus.publish.mock.calls
+      .filter(([name]) => name === "ride.state_changed")
+      .map(([, payload]) => (payload as {state: string}).state);
+    expect(publishedStates).toEqual(["payment_pending", "completed"]);
+  });
+
+  it("publishes ride.driver_location only when the driver has an active ride", async () => {
+    const {service, eventBus} = await onlineService([]);
+
+    await service.updateLocation(driver, {latitude: 24.88, longitude: 67.03});
+
+    expect(eventBus.publish).not.toHaveBeenCalledWith(
+      "ride.driver_location",
+      expect.anything(),
+    );
+  });
+
+  it("publishes ride.driver_location while an active ride is underway", async () => {
+    const {service, eventBus} = await onlineService();
+    const offered = await service.getCurrentRide(driver);
+    await service.acceptRide(driver, offered!.id);
+    eventBus.publish.mockClear();
+
+    await service.updateLocation(driver, {latitude: 24.89, longitude: 67.04});
+
+    expect(eventBus.publish).toHaveBeenCalledWith("ride.driver_location", {
+      rideId: offered!.id,
+      riderId: "rider_1",
+      driverId: "driver_1",
+      latitude: 24.89,
+      longitude: 67.04,
+      occurredAt: expect.any(String),
+    });
   });
 
   it("lists finished rides and computes earnings windows", async () => {

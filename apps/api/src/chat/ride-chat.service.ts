@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import type { RideState } from "@tami/shared";
 import { BookingRepository } from "../bookings/booking.repository";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { RideChatRepository } from "./ride-chat.repository";
 import type { RideChatMessage } from "./ride-chat.types";
 
@@ -19,6 +20,7 @@ export class RideChatService {
   constructor(
     private readonly bookingRepository: BookingRepository,
     private readonly chatRepository: RideChatRepository,
+    private readonly realtimeEventBus: RealtimeEventBus,
   ) {}
 
   async listRiderMessages({
@@ -45,13 +47,23 @@ export class RideChatService {
     if (trimmedBody.length === 0) {
       throw new BadRequestException("Message cannot be empty");
     }
-    await this.assertRiderCanChat(rideId, riderId);
-    return this.chatRepository.createRiderMessage({
+    const ride = await this.assertRiderCanChat(rideId, riderId);
+    const message = await this.chatRepository.createRiderMessage({
       rideId,
       riderId,
       body: trimmedBody,
       sentAt: new Date().toISOString(),
     });
+    this.realtimeEventBus.publish("chat.message", {
+      rideId,
+      riderId,
+      driverId: ride.driverId,
+      senderType: message.senderType,
+      senderId: message.senderId,
+      body: message.body,
+      sentAt: message.sentAt,
+    });
+    return message;
   }
 
   private async assertRiderCanChat(rideId: string, riderId: string) {
@@ -64,5 +76,6 @@ export class RideChatService {
         "Chat is available after the driver accepts the ride",
       );
     }
+    return ride;
   }
 }

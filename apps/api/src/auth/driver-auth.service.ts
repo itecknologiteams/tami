@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -70,5 +71,13 @@ export class DriverAuthService {
     }
 
     return driver;
+  }
+
+  async registerDeviceToken(driverId: string, deviceToken: string): Promise<void> {
+    const trimmedToken = deviceToken.trim();
+    if (trimmedToken.length === 0) {
+      throw new BadRequestException("Device token is required");
+    }
+    await this.repository.registerDeviceToken(driverId, trimmedToken);
   }
 }

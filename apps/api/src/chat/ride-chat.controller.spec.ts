@@ -1,9 +1,14 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InMemoryBookingRepository } from "../bookings/in-memory-booking.repository";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { RideChatController } from "./ride-chat.controller";
 import { RideChatRepository } from "./ride-chat.repository";
 import { RideChatService } from "./ride-chat.service";
 import type { RideChatMessage } from "./ride-chat.types";
+
+function createFakeEventBus(): RealtimeEventBus {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus;
+}
 
 const rider = {
   id: "rider_123",
@@ -32,7 +37,7 @@ describe("RideChatController", () => {
     );
     bookings.rides[0] = {...ride, state: "accepted"};
     const controller = new RideChatController(
-      new RideChatService(bookings, new InMemoryRideChatRepository()),
+      new RideChatService(bookings, new InMemoryRideChatRepository(), createFakeEventBus()),
     );
 
     await controller.sendMessage(rider, ride.id, {message: "I am at gate 2."});
@@ -54,7 +59,7 @@ describe("RideChatController", () => {
       "2026-07-11T10:00:00.000Z",
     );
     const controller = new RideChatController(
-      new RideChatService(bookings, new InMemoryRideChatRepository()),
+      new RideChatService(bookings, new InMemoryRideChatRepository(), createFakeEventBus()),
     );
 
     await expect(
@@ -70,7 +75,7 @@ describe("RideChatController", () => {
     );
     bookings.rides[0] = {...ride, state: "accepted"};
     const controller = new RideChatController(
-      new RideChatService(bookings, new InMemoryRideChatRepository()),
+      new RideChatService(bookings, new InMemoryRideChatRepository(), createFakeEventBus()),
     );
 
     await expect(

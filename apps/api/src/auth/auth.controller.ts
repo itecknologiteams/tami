@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
 import { AuthService } from "./auth.service";
-import { VerifyRiderRequest } from "./auth.types";
+import { AuthenticatedRider, VerifyRiderRequest } from "./auth.types";
+import { CurrentRider, RiderAuthGuard } from "./rider-auth.guard";
 
 @Controller("auth/rider")
 export class AuthController {
@@ -19,5 +20,14 @@ export class AuthController {
   @Post("verify")
   verifyRider(@Body() request: VerifyRiderRequest) {
     return this.authService.verifyRider(request);
+  }
+
+  @Post("device-token")
+  @UseGuards(RiderAuthGuard)
+  registerDeviceToken(
+    @CurrentRider() rider: AuthenticatedRider,
+    @Body() request: { deviceToken: string },
+  ) {
+    return this.authService.registerDeviceToken(rider.id, request.deviceToken);
   }
 }

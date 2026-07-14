@@ -107,4 +107,34 @@ describe("DriverAuthService", () => {
       "Driver session is invalid or expired",
     );
   });
+
+  it("registers a device token for a driver", async () => {
+    const repository = new InMemoryDriverAuthRepository([
+      { id: "city_karachi", active: true },
+    ]);
+    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const challenge = await service.requestOtp("+923009876543");
+    const result = await service.verifyDriver({
+      challengeId: challenge.challengeId,
+      code: challenge.developmentCode,
+      cityId: "city_karachi",
+    });
+
+    await service.registerDeviceToken(result.driver.id, "device-token-456");
+
+    await expect(repository.findDeviceToken(result.driver.id)).resolves.toBe(
+      "device-token-456",
+    );
+  });
+
+  it("rejects an empty device token", async () => {
+    const repository = new InMemoryDriverAuthRepository([
+      { id: "city_karachi", active: true },
+    ]);
+    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+
+    await expect(
+      service.registerDeviceToken("driver_1", ""),
+    ).rejects.toThrow("Device token is required");
+  });
 });

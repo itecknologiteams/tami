@@ -25,4 +25,9 @@ export abstract class DriverAuthRepository {
     tokenHash: string,
     now: string,
   ): Promise<AuthenticatedDriver | null>;
+  abstract registerDeviceToken(
+    driverId: string,
+    deviceToken: string,
+  ): Promise<void>;
+  abstract findDeviceToken(driverId: string): Promise<string | null>;
 }

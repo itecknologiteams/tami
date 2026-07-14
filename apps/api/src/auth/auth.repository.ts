@@ -36,4 +36,9 @@ export abstract class AuthRepository {
     tokenHash: string,
     now: string,
   ): Promise<AuthenticatedRider | null>;
+  abstract registerDeviceToken(
+    riderId: string,
+    deviceToken: string,
+  ): Promise<void>;
+  abstract findDeviceToken(riderId: string): Promise<string | null>;
 }

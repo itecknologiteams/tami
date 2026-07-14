@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
+import '../../realtime/realtime_client.dart';
 import '../../ui/tami_glass.dart';
 import '../../location/rider_location_client.dart';
 import 'account/rider_account_screen.dart';
@@ -25,6 +26,8 @@ class RiderShell extends StatefulWidget {
     this.pricingClient,
     this.locationClient,
     this.placeSearchClient,
+    this.apiBaseUrl,
+    this.realtimeClient,
     super.key,
   });
 
@@ -37,6 +40,8 @@ class RiderShell extends StatefulWidget {
   final RiderPricingClient? pricingClient;
   final RiderLocationClient? locationClient;
   final RiderPlaceSearchClient? placeSearchClient;
+  final String? apiBaseUrl;
+  final RealtimeClient? realtimeClient;
 
   @override
   State<RiderShell> createState() => _RiderShellState();
@@ -58,6 +63,8 @@ class _RiderShellState extends State<RiderShell> {
         pricingClient: widget.pricingClient,
         placeSearchClient: widget.placeSearchClient,
         locationClient: widget.locationClient,
+        apiBaseUrl: widget.apiBaseUrl,
+        realtimeClient: widget.realtimeClient,
       ),
       RiderTripsScreen(
         session: widget.session,

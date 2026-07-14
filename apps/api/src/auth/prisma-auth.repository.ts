@@ -159,4 +159,19 @@ export class PrismaAuthRepository extends AuthRepository {
       cityId: session.rider.cityId,
     };
   }
+
+  async registerDeviceToken(riderId: string, deviceToken: string): Promise<void> {
+    await this.prisma.rider.update({
+      where: { id: riderId },
+      data: { deviceToken },
+    });
+  }
+
+  async findDeviceToken(riderId: string): Promise<string | null> {
+    const rider = await this.prisma.rider.findUnique({
+      where: { id: riderId },
+      select: { deviceToken: true },
+    });
+    return rider?.deviceToken ?? null;
+  }
 }

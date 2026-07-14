@@ -1,10 +1,15 @@
 import { NotFoundException } from "@nestjs/common";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BookingService } from "../bookings/booking.service";
 import { InMemoryBookingRepository } from "../bookings/in-memory-booking.repository";
 import { createTestPricingService } from "../pricing/pricing.test-fixture";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { RiderRideQueryController } from "./rider-ride-query.controller";
 import { RiderRideQueryService } from "./rider-ride-query.service";
+
+function createFakeEventBus(): RealtimeEventBus {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus;
+}
 
 const rider = {
   id: "rider_123",
@@ -15,7 +20,11 @@ const rider = {
 describe("RiderRideQueryController", () => {
   it("returns rider-owned detail and rejects another rider", async () => {
     const repository = new InMemoryBookingRepository();
-    const booking = new BookingService(repository, createTestPricingService());
+    const booking = new BookingService(
+      repository,
+      createTestPricingService(),
+      createFakeEventBus(),
+    );
     const ride = await booking.createRide({
       cityId: rider.cityId,
       riderId: rider.id,

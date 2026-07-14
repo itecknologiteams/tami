@@ -118,14 +118,15 @@ model RideCategory {
 }
 
 model Rider {
-  id        String   @id @default(cuid())
-  cityId    String
-  phone     String   @unique
-  name      String?
-  email     String?
-  imageUrl  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  cityId      String
+  phone       String   @unique
+  name        String?
+  email       String?
+  imageUrl    String?
+  deviceToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   city        City           @relation(fields: [cityId], references: [id])
   rides       Ride[]
@@ -174,6 +175,7 @@ model Driver {
   lastOnlineAt DateTime?
   latitude     Decimal?  @db.Decimal(9, 6)
   longitude    Decimal?  @db.Decimal(9, 6)
+  deviceToken  String?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 

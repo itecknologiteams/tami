@@ -6,6 +6,7 @@ import {
 import type { RideState } from "@tami/shared";
 import { RideChatRepository } from "../chat/ride-chat.repository";
 import type { RideChatMessage } from "../chat/ride-chat.types";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { DriverRideRepository } from "./driver-ride.repository";
 
 const chatEligibleStates = new Set<RideState>([
@@ -23,6 +24,7 @@ export class DriverRideChatService {
   constructor(
     private readonly rideRepository: DriverRideRepository,
     private readonly chatRepository: RideChatRepository,
+    private readonly realtimeEventBus: RealtimeEventBus,
   ) {}
 
   async listDriverMessages({
@@ -49,13 +51,23 @@ export class DriverRideChatService {
     if (trimmedBody.length === 0) {
       throw new BadRequestException("Message cannot be empty");
     }
-    await this.assertDriverCanChat(rideId, driverId);
-    return this.chatRepository.createDriverMessage({
+    const ride = await this.assertDriverCanChat(rideId, driverId);
+    const message = await this.chatRepository.createDriverMessage({
       rideId,
       driverId,
       body: trimmedBody,
       sentAt: new Date().toISOString(),
     });
+    this.realtimeEventBus.publish("chat.message", {
+      rideId,
+      riderId: ride.riderId,
+      driverId,
+      senderType: message.senderType,
+      senderId: message.senderId,
+      body: message.body,
+      sentAt: message.sentAt,
+    });
+    return message;
   }
 
   private async assertDriverCanChat(rideId: string, driverId: string) {
@@ -68,5 +80,6 @@ export class DriverRideChatService {
         "Chat is available after the driver accepts the ride",
       );
     }
+    return ride;
   }
 }

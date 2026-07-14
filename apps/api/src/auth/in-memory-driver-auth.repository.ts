@@ -10,6 +10,7 @@ type City = { id: string; name?: string; active: boolean };
 export class InMemoryDriverAuthRepository extends DriverAuthRepository {
   readonly drivers: DriverProfile[] = [];
   readonly sessions: DriverSession[] = [];
+  readonly deviceTokens = new Map<string, string>();
 
   private driverSequence = 0;
   private sessionSequence = 0;
@@ -99,6 +100,14 @@ export class InMemoryDriverAuthRepository extends DriverAuthRepository {
 
     session.lastUsedAt = now;
     return { id: driver.id, phone: driver.phone, cityId: driver.cityId };
+  }
+
+  async registerDeviceToken(driverId: string, deviceToken: string): Promise<void> {
+    this.deviceTokens.set(driverId, deviceToken);
+  }
+
+  async findDeviceToken(driverId: string): Promise<string | null> {
+    return this.deviceTokens.get(driverId) ?? null;
   }
 
   private cityName(cityId: string): string {

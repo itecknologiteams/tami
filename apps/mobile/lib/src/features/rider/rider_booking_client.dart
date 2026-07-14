@@ -77,6 +77,19 @@ class RiderBookingRide {
   final int? farePolicyVersion;
   final String? paymentMethod;
 
+  RiderBookingRide copyWithState(String state) {
+    return RiderBookingRide(
+      id: id,
+      state: state,
+      categoryCode: categoryCode,
+      scheduledPickupAt: scheduledPickupAt,
+      estimatedFareMinor: estimatedFareMinor,
+      currency: currency,
+      farePolicyVersion: farePolicyVersion,
+      paymentMethod: paymentMethod,
+    );
+  }
+
   factory RiderBookingRide.fromJson(Map<String, dynamic> json) {
     return RiderBookingRide(
       id: json['id'] as String,

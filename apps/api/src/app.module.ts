@@ -33,6 +33,9 @@ import { RideChatController } from "./chat/ride-chat.controller";
 import { RideChatRepository } from "./chat/ride-chat.repository";
 import { RideChatService } from "./chat/ride-chat.service";
 import { HealthController } from "./health/health.controller";
+import { DevelopmentPushNotificationProvider } from "./notifications/development-push-notification.provider";
+import { FcmPushNotificationProvider } from "./notifications/fcm-push-notification.provider";
+import { PushNotificationProvider } from "./notifications/push-notification.provider";
 import { PlatformConfigController } from "./platform/platform-config.controller";
 import { PlatformConfigService } from "./platform/platform-config.service";
 import { PrismaSavedPlacesRepository } from "./places/prisma-saved-places.repository";
@@ -52,6 +55,12 @@ import { PricingController } from "./pricing/pricing.controller";
 import { PrismaPricingRepository } from "./pricing/prisma-pricing.repository";
 import { PricingRepository } from "./pricing/pricing.repository";
 import { PricingService } from "./pricing/pricing.service";
+import {
+  DriverRealtimeGateway,
+  RealtimeAuthHandshake,
+  RiderRealtimeGateway,
+} from "./realtime/realtime.gateway";
+import { RealtimeEventBus } from "./realtime/realtime-event-bus";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
 import { OsrmRoutingProvider } from "./routing/osrm-routing.provider";
@@ -146,6 +155,14 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
       provide: AdminOverviewRepository,
       useClass: PrismaAdminOverviewRepository,
     },
+    RealtimeEventBus,
+    RealtimeAuthHandshake,
+    RiderRealtimeGateway,
+    DriverRealtimeGateway,
+    {
+      provide: PushNotificationProvider,
+      useFactory: createPushNotificationProvider,
+    },
   ],
 })
 export class AppModule {}
@@ -174,4 +191,15 @@ function createRoutingProvider(): RoutingProvider {
     throw new Error("TAMI_ROUTING_BASE_URL is required in production");
   }
   return new OsrmRoutingProvider({baseUrl: "https://router.project-osrm.org"});
+}
+
+function createPushNotificationProvider(): PushNotificationProvider {
+  const serverKey = process.env.TAMI_FCM_SERVER_KEY?.trim();
+  if (serverKey) {
+    return new FcmPushNotificationProvider({serverKey});
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("TAMI_FCM_SERVER_KEY is required in production");
+  }
+  return new DevelopmentPushNotificationProvider();
 }

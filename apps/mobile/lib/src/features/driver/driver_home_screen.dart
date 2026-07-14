@@ -6,6 +6,7 @@ import '../../location/rider_location.dart';
 import '../../location/rider_location_client.dart';
 import '../../maps/tami_map_surface.dart';
 import '../../maps/tami_map_view_state.dart';
+import '../../realtime/realtime_client.dart';
 import '../../ui/tami_colors.dart';
 import '../../ui/tami_glass.dart';
 import '../rider/chat/ride_chat_sheet.dart';
@@ -21,7 +22,11 @@ class DriverHomeScreen extends StatefulWidget {
     this.chatClient,
     this.locationClient,
     this.mapSurface,
-    this.pollInterval = const Duration(seconds: 3),
+    this.realtimeClient,
+    this.apiBaseUrl,
+    // Fallback poll interval while a ride is active/offline of the socket;
+    // the socket delivers offers/state changes immediately when connected.
+    this.pollInterval = const Duration(seconds: 15),
     super.key,
   });
 
@@ -30,6 +35,8 @@ class DriverHomeScreen extends StatefulWidget {
   final RiderChatClient? chatClient;
   final RiderLocationClient? locationClient;
   final Widget? mapSurface;
+  final RealtimeClient? realtimeClient;
+  final String? apiBaseUrl;
   final Duration pollInterval;
 
   @override
@@ -46,12 +53,74 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
   DriverRoute? _route;
   String? _routeForRideId;
   String? _error;
+  RealtimeClient? _realtimeClient;
+  StreamSubscription<Map<String, dynamic>>? _offerSubscription;
+  StreamSubscription<Map<String, dynamic>>? _rideStateSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _connectRealtime();
+  }
 
   @override
   void dispose() {
     _pollTimer?.cancel();
     _locationTimer?.cancel();
+    _offerSubscription?.cancel();
+    _rideStateSubscription?.cancel();
+    _realtimeClient?.dispose();
     super.dispose();
+  }
+
+  void _connectRealtime() {
+    final accessToken = widget.session.accessToken;
+    final baseUrl = widget.apiBaseUrl;
+    final client =
+        widget.realtimeClient ??
+        (baseUrl != null
+            ? SocketIoRealtimeClient(
+                baseUrl: baseUrl,
+                namespace: '/driver',
+                accessToken: accessToken,
+              )
+            : null);
+    if (client == null) {
+      return;
+    }
+    _realtimeClient = client;
+    client.connect();
+    _offerSubscription = client.on<Map<String, dynamic>>('ride.offer').listen((
+      _,
+    ) {
+      if (_online && !_isBusy) {
+        unawaited(_refreshRide());
+      }
+    });
+    _rideStateSubscription = client
+        .on<Map<String, dynamic>>('ride.state_changed')
+        .listen(_onRideStateChanged);
+  }
+
+  void _onRideStateChanged(Map<String, dynamic> event) {
+    final ride = _ride;
+    if (ride == null || event['rideId'] != ride.id || !mounted) {
+      return;
+    }
+    final state = event['state'] as String?;
+    if (state == null || state == ride.state) {
+      return;
+    }
+    // The driver app itself always drives its own state changes through the
+    // REST actions (accept/advance/complete); this only matters if the ride
+    // was reassigned or cancelled by another actor (e.g. rider/admin).
+    if (state == 'cancelled_by_rider' || state == 'cancelled_by_admin') {
+      setState(() {
+        _ride = null;
+        _route = null;
+        _routeForRideId = null;
+      });
+    }
   }
 
   Future<void> _setOnline(bool online) async {

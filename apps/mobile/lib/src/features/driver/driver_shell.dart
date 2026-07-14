@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../location/rider_location_client.dart';
+import '../../realtime/realtime_client.dart';
 import '../rider/rider_chat_client.dart';
 import 'driver_account_screen.dart';
 import 'driver_earnings_screen.dart';
@@ -14,7 +15,9 @@ class DriverShell extends StatefulWidget {
     required this.rideClient,
     this.chatClient,
     this.locationClient,
-    this.pollInterval = const Duration(seconds: 3),
+    this.apiBaseUrl,
+    this.realtimeClient,
+    this.pollInterval = const Duration(seconds: 15),
     super.key,
   });
 
@@ -22,6 +25,8 @@ class DriverShell extends StatefulWidget {
   final DriverRideClient rideClient;
   final RiderChatClient? chatClient;
   final RiderLocationClient? locationClient;
+  final String? apiBaseUrl;
+  final RealtimeClient? realtimeClient;
   final Duration pollInterval;
 
   @override
@@ -40,7 +45,9 @@ class _DriverShellState extends State<DriverShell> {
         rideClient: widget.rideClient,
         chatClient: widget.chatClient,
         locationClient: widget.locationClient,
+        apiBaseUrl: widget.apiBaseUrl,
         pollInterval: widget.pollInterval,
+        realtimeClient: widget.realtimeClient,
       ),
       // Recreated per visit so totals reflect rides finished since mount.
       DriverEarningsScreen(

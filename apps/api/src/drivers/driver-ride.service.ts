@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { assertRideStateTransition, RideState } from "@tami/shared";
 import { AuthenticatedDriver } from "../auth/driver-auth.types";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { RoutingService } from "../routing/routing.service";
 import { RoutePreview } from "../routing/routing.types";
 import {
@@ -27,6 +28,7 @@ export class DriverRideService {
   constructor(
     private readonly repository: DriverRideRepository,
     private readonly routingService: RoutingService,
+    private readonly realtimeEventBus: RealtimeEventBus,
   ) {}
 
   async updateAvailability(
@@ -53,11 +55,18 @@ export class DriverRideService {
     if (activeRide != null) {
       return activeRide;
     }
-    return this.repository.claimNextRideForDriver({
+    const offeredRide = await this.repository.claimNextRideForDriver({
       driverId: driver.id,
       cityId: driver.cityId,
       occurredAt: new Date().toISOString(),
     });
+    if (offeredRide != null) {
+      this.realtimeEventBus.publish("ride.offer", {
+        rideId: offeredRide.id,
+        driverId: driver.id,
+      });
+    }
+    return offeredRide;
   }
 
   async acceptRide(
@@ -76,14 +85,16 @@ export class DriverRideService {
     if (ride.state !== "offered_to_driver") {
       throw new ConflictException("Only offered rides can be declined");
     }
+    const occurredAt = new Date().toISOString();
     const declined = await this.repository.declineOfferForDriver({
       rideId,
       driverId: driver.id,
-      occurredAt: new Date().toISOString(),
+      occurredAt,
     });
     if (declined == null) {
       throw new ConflictException("Ride offer has already changed");
     }
+    this.publishRideStateChanged(declined, occurredAt);
     return {declined: true};
   }
 
@@ -127,6 +138,7 @@ export class DriverRideService {
       "system",
     );
     const finalFareMinor = pending.estimatedFareMinor ?? 0;
+    const occurredAt = new Date().toISOString();
     const completed = await this.repository.changeRideStateForDriver({
       rideId,
       driverId: driver.id,
@@ -136,19 +148,20 @@ export class DriverRideService {
         to: "completed",
         actorType: "driver",
         actorId: driver.id,
-        occurredAt: new Date().toISOString(),
+        occurredAt,
         source: "driver_app",
       }).from,
       toState: "completed",
       actorType: "driver",
       actorId: driver.id,
       source: "driver_app",
-      occurredAt: new Date().toISOString(),
+      occurredAt,
       finalFareMinor,
     });
     if (completed == null) {
       throw new ConflictException("Ride state changed while completing");
     }
+    this.publishRideStateChanged(completed, occurredAt);
     return completed;
   }
 
@@ -160,12 +173,25 @@ export class DriverRideService {
     if (location == null) {
       throw new BadRequestException("Driver location is required");
     }
-    return this.repository.updateLocation({
+    const occurredAt = new Date().toISOString();
+    const presence = await this.repository.updateLocation({
       driverId: driver.id,
       latitude: location.latitude,
       longitude: location.longitude,
-      occurredAt: new Date().toISOString(),
+      occurredAt,
     });
+    const activeRide = await this.repository.findActiveRideForDriver(driver.id);
+    if (activeRide != null) {
+      this.realtimeEventBus.publish("ride.driver_location", {
+        rideId: activeRide.id,
+        riderId: activeRide.riderId,
+        driverId: driver.id,
+        latitude: location.latitude,
+        longitude: location.longitude,
+        occurredAt,
+      });
+    }
+    return presence;
   }
 
   async getRideRoute(
@@ -244,7 +270,21 @@ export class DriverRideService {
     if (updated == null) {
       throw new ConflictException("Ride state changed, refresh and retry");
     }
+    this.publishRideStateChanged(updated, occurredAt);
     return updated;
+  }
+
+  private publishRideStateChanged(
+    ride: DriverRideView,
+    occurredAt: string,
+  ): void {
+    this.realtimeEventBus.publish("ride.state_changed", {
+      rideId: ride.id,
+      riderId: ride.riderId,
+      driverId: ride.driverId,
+      state: ride.state,
+      occurredAt,
+    });
   }
 }
 

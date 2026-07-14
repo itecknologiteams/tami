@@ -15,6 +15,7 @@ import '../features/rider/rider_pricing_client.dart';
 import '../features/rider/rider_place_search_client.dart';
 import '../location/geolocator_rider_location_client.dart';
 import '../location/rider_location_client.dart';
+import '../realtime/realtime_client.dart';
 import '../ui/tami_theme.dart';
 
 enum TamiAppMode { rider, driver }
@@ -34,6 +35,8 @@ class TamiMobileApp extends StatelessWidget {
     this.driverIdentityClient,
     this.driverRideClient,
     this.driverChatClient,
+    this.riderRealtimeClient,
+    this.driverRealtimeClient,
     this.driverPollInterval = const Duration(seconds: 3),
     super.key,
   });
@@ -51,6 +54,8 @@ class TamiMobileApp extends StatelessWidget {
   final DriverIdentityClient? driverIdentityClient;
   final DriverRideClient? driverRideClient;
   final RiderChatClient? driverChatClient;
+  final RealtimeClient? riderRealtimeClient;
+  final RealtimeClient? driverRealtimeClient;
   final Duration driverPollInterval;
 
   @override
@@ -86,6 +91,8 @@ class TamiMobileApp extends StatelessWidget {
           placeSearchClient:
               riderPlaceSearchClient ??
               HttpRiderPlaceSearchClient(baseUrl: _apiBaseUrl),
+          apiBaseUrl: _apiBaseUrl,
+          realtimeClient: riderRealtimeClient,
         ),
         TamiAppMode.driver => DriverOnboardingScreen(
           identityClient:
@@ -97,7 +104,9 @@ class TamiMobileApp extends StatelessWidget {
               driverChatClient ?? HttpDriverChatClient(baseUrl: _apiBaseUrl),
           locationClient:
               riderLocationClient ?? GeolocatorRiderLocationClient(),
+          apiBaseUrl: _apiBaseUrl,
           pollInterval: driverPollInterval,
+          realtimeClient: driverRealtimeClient,
         ),
       },
     );

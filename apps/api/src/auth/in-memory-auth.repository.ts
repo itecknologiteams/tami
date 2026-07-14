@@ -11,6 +11,7 @@ type City = { id: string; name?: string; active: boolean };
 export class InMemoryAuthRepository extends AuthRepository {
   readonly riders: RiderProfile[] = [];
   readonly sessions: RiderSession[] = [];
+  readonly deviceTokens = new Map<string, string>();
 
   private riderSequence = 0;
   private sessionSequence = 0;
@@ -130,6 +131,14 @@ export class InMemoryAuthRepository extends AuthRepository {
 
     session.lastUsedAt = now;
     return { id: rider.id, phone: rider.phone, cityId: rider.cityId };
+  }
+
+  async registerDeviceToken(riderId: string, deviceToken: string): Promise<void> {
+    this.deviceTokens.set(riderId, deviceToken);
+  }
+
+  async findDeviceToken(riderId: string): Promise<string | null> {
+    return this.deviceTokens.get(riderId) ?? null;
   }
 
   private cityName(cityId: string): string {

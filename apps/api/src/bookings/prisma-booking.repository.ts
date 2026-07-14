@@ -36,6 +36,7 @@ function toBookingRide(
     id: ride.id,
     cityId: ride.cityId,
     riderId: ride.riderId,
+    driverId: ride.driverId,
     categoryCode: ride.category.code,
     state: ride.state,
     pickup: {

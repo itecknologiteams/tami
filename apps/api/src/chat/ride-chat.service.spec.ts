@@ -1,8 +1,15 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { InMemoryBookingRepository } from "../bookings/in-memory-booking.repository";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import type { RideChatMessage } from "./ride-chat.types";
 import { RideChatRepository } from "./ride-chat.repository";
 import { RideChatService } from "./ride-chat.service";
+
+function createFakeEventBus() {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus & {
+    publish: ReturnType<typeof vi.fn>;
+  };
+}
 
 const createRequest = {
   cityId: "city_karachi",
@@ -21,7 +28,8 @@ describe("RideChatService", () => {
     );
     bookings.rides[0] = {...ride, state: "accepted"};
     const messages = new InMemoryRideChatRepository();
-    const service = new RideChatService(bookings, messages);
+    const eventBus = createFakeEventBus();
+    const service = new RideChatService(bookings, messages, eventBus);
 
     const message = await service.sendRiderMessage({
       rideId: ride.id,
@@ -36,6 +44,15 @@ describe("RideChatService", () => {
         body: "I am at the main gate.",
       }),
     );
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "chat.message",
+      expect.objectContaining({
+        rideId: ride.id,
+        riderId: "rider_123",
+        senderType: "rider",
+        body: "I am at the main gate.",
+      }),
+    );
   });
 
   it("rejects chat before a ride is accepted", async () => {
@@ -44,7 +61,12 @@ describe("RideChatService", () => {
       createRequest,
       "2026-07-10T10:00:00.000Z",
     );
-    const service = new RideChatService(bookings, new InMemoryRideChatRepository());
+    const eventBus = createFakeEventBus();
+    const service = new RideChatService(
+      bookings,
+      new InMemoryRideChatRepository(),
+      eventBus,
+    );
 
     await expect(
       service.sendRiderMessage({
@@ -53,6 +75,7 @@ describe("RideChatService", () => {
         body: "I am at the main gate.",
       }),
     ).rejects.toThrow("Chat is available after the driver accepts the ride");
+    expect(eventBus.publish).not.toHaveBeenCalled();
   });
 });
 

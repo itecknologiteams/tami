@@ -1,15 +1,20 @@
 import { randomUUID } from "node:crypto";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { PrismaClient } from "@prisma/client";
 import { BookingService } from "../bookings/booking.service";
 import { PrismaBookingRepository } from "../bookings/prisma-booking.repository";
 import { createIntegrationFarePolicy } from "../pricing/pricing.integration-fixture";
 import { PrismaPricingRepository } from "../pricing/prisma-pricing.repository";
 import { PricingService } from "../pricing/pricing.service";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { createTestRoutingService } from "../routing/routing.test-fixture";
 import { AuthService } from "./auth.service";
 import { DevelopmentOtpStore } from "./development-otp-store";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
+
+function createFakeEventBus(): RealtimeEventBus {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus;
+}
 
 const describeDatabase =
   process.env.RUN_DATABASE_TESTS === "true" ? describe : describe.skip;
@@ -77,6 +82,7 @@ describeDatabase("rider authentication integration", () => {
         new PrismaPricingRepository(prisma as never),
         createTestRoutingService(),
       ),
+      createFakeEventBus(),
     ).createRide({
       cityId: authenticatedRider.cityId,
       riderId: authenticatedRider.id,

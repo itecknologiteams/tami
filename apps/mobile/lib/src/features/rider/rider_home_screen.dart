@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart';
@@ -5,6 +7,7 @@ import '../../maps/tami_map_surface.dart';
 import '../../maps/tami_map_view_state.dart';
 import '../../location/rider_location.dart';
 import '../../location/rider_location_client.dart';
+import '../../realtime/realtime_client.dart';
 import '../../ui/tami_colors.dart';
 import '../../ui/tami_glass.dart';
 import 'active_ride/active_ride_panel.dart';
@@ -38,6 +41,8 @@ class RiderHomeScreen extends StatefulWidget {
     this.initialPickup,
     this.initialRide,
     this.initialDestination,
+    this.realtimeClient,
+    this.apiBaseUrl,
     super.key,
   }) : assert(initialRide == null || initialDestination != null);
 
@@ -54,10 +59,21 @@ class RiderHomeScreen extends StatefulWidget {
   final TamiPlace? initialPickup;
   final RiderBookingRide? initialRide;
   final TamiPlace? initialDestination;
+  final RealtimeClient? realtimeClient;
+  final String? apiBaseUrl;
 
   @override
   State<RiderHomeScreen> createState() => _RiderHomeScreenState();
 }
+
+const _terminalRideStates = {
+  'completed',
+  'cancelled_by_rider',
+  'cancelled_by_driver',
+  'cancelled_by_admin',
+  'no_show',
+  'disputed',
+};
 
 class _RiderHomeScreenState extends State<RiderHomeScreen> {
   TamiPlace? _destination;
@@ -67,6 +83,8 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
   List<TamiMapCoordinate> _routeCoordinates = const [];
   RiderLocationStatus _pickupStatus = RiderLocationStatus.failed;
   bool _isLocatingPickup = false;
+  RealtimeClient? _realtimeClient;
+  StreamSubscription<Map<String, dynamic>>? _rideStateSubscription;
 
   @override
   void initState() {
@@ -77,6 +95,7 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       _pickupStatus = RiderLocationStatus.ready;
     }
     _activeRide = widget.initialRide;
+    _connectRealtime();
     if (_activeRide == null) {
       _restoreCurrentRide().whenComplete(() {
         if (mounted && _activeRide == null && _pickup == null) {
@@ -87,6 +106,58 @@ class _RiderHomeScreenState extends State<RiderHomeScreen> {
       _resolveCurrentPickup();
     }
     _loadSavedPlaces();
+  }
+
+  @override
+  void dispose() {
+    _rideStateSubscription?.cancel();
+    _realtimeClient?.dispose();
+    super.dispose();
+  }
+
+  void _connectRealtime() {
+    final accessToken = widget.session?.accessToken;
+    final baseUrl = widget.apiBaseUrl;
+    final client =
+        widget.realtimeClient ??
+        (accessToken != null && baseUrl != null
+            ? SocketIoRealtimeClient(
+                baseUrl: baseUrl,
+                namespace: '/rider',
+                accessToken: accessToken,
+              )
+            : null);
+    if (client == null) {
+      return;
+    }
+    _realtimeClient = client;
+    client.connect();
+    _rideStateSubscription = client.on<Map<String, dynamic>>('ride.state_changed').listen(
+      _onRideStateChanged,
+    );
+  }
+
+  void _onRideStateChanged(Map<String, dynamic> event) {
+    final activeRide = _activeRide;
+    if (activeRide == null || event['rideId'] != activeRide.id) {
+      return;
+    }
+    final state = event['state'] as String?;
+    if (state == null) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      if (_terminalRideStates.contains(state)) {
+        _activeRide = null;
+        _destination = null;
+        _routeCoordinates = const [];
+      } else {
+        _activeRide = activeRide.copyWithState(state);
+      }
+    });
   }
 
   Future<void> _resolveCurrentPickup() async {

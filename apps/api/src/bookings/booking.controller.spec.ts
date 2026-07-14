@@ -1,8 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BookingController } from "./booking.controller";
 import { BookingService } from "./booking.service";
 import { InMemoryBookingRepository } from "./in-memory-booking.repository";
 import { createTestPricingService } from "../pricing/pricing.test-fixture";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
+
+function createFakeEventBus(): RealtimeEventBus {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus;
+}
 
 describe("BookingController", () => {
   it("creates a ride request", async () => {
@@ -10,6 +15,7 @@ describe("BookingController", () => {
       new BookingService(
         new InMemoryBookingRepository(),
         createTestPricingService(),
+        createFakeEventBus(),
       ),
     );
 
@@ -53,6 +59,7 @@ describe("BookingController", () => {
       new BookingService(
         new InMemoryBookingRepository(),
         createTestPricingService(),
+        createFakeEventBus(),
       ),
     );
     const rider = {
@@ -89,6 +96,7 @@ describe("BookingController", () => {
       new BookingService(
         new InMemoryBookingRepository(),
         createTestPricingService(),
+        createFakeEventBus(),
       ),
     );
     const rider = {

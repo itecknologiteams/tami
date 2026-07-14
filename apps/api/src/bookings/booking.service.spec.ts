@@ -1,10 +1,17 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { BookingService } from "./booking.service";
 import { InMemoryBookingRepository } from "./in-memory-booking.repository";
 import { InMemoryPricingRepository } from "../pricing/in-memory-pricing.repository";
 import { PricingService } from "../pricing/pricing.service";
 import { createTestRoutingService } from "../routing/routing.test-fixture";
 import { PricingPolicy } from "../pricing/pricing.types";
+import { RealtimeEventBus } from "../realtime/realtime-event-bus";
+
+function createFakeEventBus() {
+  return {publish: vi.fn(), subscribe: vi.fn()} as unknown as RealtimeEventBus & {
+    publish: ReturnType<typeof vi.fn>;
+  };
+}
 
 const baseRequest = {
   cityId: "city_karachi",
@@ -42,13 +49,17 @@ const pricingPolicy: PricingPolicy = {
   categoryMultiplier: 1,
 };
 
-function createService(repository: InMemoryBookingRepository) {
+function createService(
+  repository: InMemoryBookingRepository,
+  eventBus: RealtimeEventBus = createFakeEventBus(),
+) {
   return new BookingService(
     repository,
     new PricingService(
       new InMemoryPricingRepository([pricingPolicy]),
       createTestRoutingService(),
     ),
+    eventBus,
   );
 }
 
@@ -200,6 +211,56 @@ describe("BookingService", () => {
         fromState: "requested",
         toState: "cancelled_by_rider",
         actorType: "rider",
+      }),
+    );
+  });
+
+  it("publishes a ride.state_changed event when a ride is created", async () => {
+    const repository = new InMemoryBookingRepository();
+    const eventBus = createFakeEventBus();
+    const service = createService(repository, eventBus);
+
+    const ride = await service.createRide(baseRequest);
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: ride.id,
+        riderId: "rider_123",
+        driverId: null,
+        state: "requested",
+      }),
+    );
+  });
+
+  it("does not republish an event when an idempotent retry returns the same ride", async () => {
+    const repository = new InMemoryBookingRepository();
+    const eventBus = createFakeEventBus();
+    const service = createService(repository, eventBus);
+
+    await service.createRide(baseRequest);
+    eventBus.publish.mockClear();
+    await service.createRide(baseRequest);
+
+    expect(eventBus.publish).not.toHaveBeenCalled();
+  });
+
+  it("publishes a ride.state_changed event when a ride is cancelled", async () => {
+    const repository = new InMemoryBookingRepository();
+    const eventBus = createFakeEventBus();
+    const service = createService(repository, eventBus);
+    const ride = await service.createRide(baseRequest);
+    eventBus.publish.mockClear();
+
+    await service.cancelRide({rideId: ride.id, riderId: "rider_123"});
+
+    expect(eventBus.publish).toHaveBeenCalledWith(
+      "ride.state_changed",
+      expect.objectContaining({
+        rideId: ride.id,
+        riderId: "rider_123",
+        driverId: null,
+        state: "cancelled_by_rider",
       }),
     );
   });

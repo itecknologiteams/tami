@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../auth/rider_session.dart' show DevelopmentOtpChallenge, RiderCity;
 import '../../location/rider_location_client.dart';
+import '../../realtime/realtime_client.dart';
 import '../rider/rider_chat_client.dart';
 import 'driver_identity_client.dart';
 import 'driver_ride_client.dart';
@@ -13,7 +14,9 @@ class DriverOnboardingScreen extends StatefulWidget {
     required this.rideClient,
     this.chatClient,
     this.locationClient,
-    this.pollInterval = const Duration(seconds: 3),
+    this.apiBaseUrl,
+    this.realtimeClient,
+    this.pollInterval = const Duration(seconds: 15),
     super.key,
   });
 
@@ -21,6 +24,8 @@ class DriverOnboardingScreen extends StatefulWidget {
   final DriverRideClient rideClient;
   final RiderChatClient? chatClient;
   final RiderLocationClient? locationClient;
+  final String? apiBaseUrl;
+  final RealtimeClient? realtimeClient;
   final Duration pollInterval;
 
   @override
@@ -84,7 +89,9 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
             rideClient: widget.rideClient,
             chatClient: widget.chatClient,
             locationClient: widget.locationClient,
+            apiBaseUrl: widget.apiBaseUrl,
             pollInterval: widget.pollInterval,
+            realtimeClient: widget.realtimeClient,
           ),
         ),
       );

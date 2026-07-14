@@ -70,4 +70,34 @@ describe("AuthService", () => {
       cityId: "city_karachi",
     });
   });
+
+  it("registers a device token for a rider", async () => {
+    const repository = new InMemoryAuthRepository([
+      { id: "city_karachi", active: true },
+    ]);
+    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const challenge = await service.requestOtp("+923001234567");
+    const session = await service.verifyRider({
+      challengeId: challenge.challengeId,
+      code: challenge.developmentCode,
+      cityId: "city_karachi",
+    });
+
+    await service.registerDeviceToken(session.rider.id, "device-token-123");
+
+    await expect(repository.findDeviceToken(session.rider.id)).resolves.toBe(
+      "device-token-123",
+    );
+  });
+
+  it("rejects an empty device token", async () => {
+    const repository = new InMemoryAuthRepository([
+      { id: "city_karachi", active: true },
+    ]);
+    const service = new AuthService(repository, new DevelopmentOtpStore());
+
+    await expect(
+      service.registerDeviceToken("rider_1", "   "),
+    ).rejects.toThrow("Device token is required");
+  });
 });

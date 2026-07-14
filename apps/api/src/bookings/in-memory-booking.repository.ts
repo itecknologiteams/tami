@@ -50,6 +50,7 @@ export class InMemoryBookingRepository extends BookingRepository {
       id: `ride_${this.rides.length + 1}`,
       cityId: request.cityId,
       riderId: request.riderId,
+      driverId: null,
       categoryCode: request.categoryCode,
       state: "requested",
       pickup: request.pickup,

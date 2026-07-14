@@ -124,4 +124,19 @@ export class PrismaDriverAuthRepository extends DriverAuthRepository {
       cityId: session.driver.cityId,
     };
   }
+
+  async registerDeviceToken(driverId: string, deviceToken: string): Promise<void> {
+    await this.prisma.driver.update({
+      where: { id: driverId },
+      data: { deviceToken },
+    });
+  }
+
+  async findDeviceToken(driverId: string): Promise<string | null> {
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+      select: { deviceToken: true },
+    });
+    return driver?.deviceToken ?? null;
+  }
 }
