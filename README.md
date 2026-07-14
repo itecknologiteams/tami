@@ -14,6 +14,14 @@ This repository starts with the foundation for:
 
 ## Setup
 
+Run the one-shot setup script to install dependencies, start Postgres and Nominatim, run migrations, seed launch data, and prepare the Flutter app:
+
+```bash
+./scripts/setup.sh
+```
+
+It's safe to re-run at any time. Requires Node 22+, Docker, and (optionally) Flutter. Or set up manually:
+
 ```bash
 pnpm install
 ```
