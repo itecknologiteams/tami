@@ -3,6 +3,7 @@
 #   TAMI_DB_PASSWORD        strong database password
 #   TAMI_NOMINATIM_PASSWORD strong Nominatim database password
 #   TAMI_ROUTING_BASE_URL   OSRM-compatible routing service URL
+#   TAMI_REDIS_URL          Redis URL for OTP rate limiting (defaults to redis://redis:6379)
 #   TAMI_ADMIN_TOKEN        secret shared with the admin command center
 #   TAMI_CORS_ORIGINS       comma-separated allowed origins (optional)
 services:
@@ -40,6 +41,17 @@ services:
       retries: 120
       start_period: 30m
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - tami-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build:
       context: .
@@ -50,6 +62,7 @@ services:
       DATABASE_URL: postgresql://tami:${TAMI_DB_PASSWORD:?TAMI_DB_PASSWORD is required}@postgres:5432/tami
       TAMI_NOMINATIM_BASE_URL: http://nominatim:8080
       TAMI_ROUTING_BASE_URL: ${TAMI_ROUTING_BASE_URL:?TAMI_ROUTING_BASE_URL is required}
+      TAMI_REDIS_URL: redis://redis:6379
       TAMI_ADMIN_TOKEN: ${TAMI_ADMIN_TOKEN:?TAMI_ADMIN_TOKEN is required}
       TAMI_CORS_ORIGINS: ${TAMI_CORS_ORIGINS:-}
     ports:
@@ -59,8 +72,11 @@ services:
         condition: service_healthy
       nominatim:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   tami-postgres-data:
   tami-nominatim-data:
   tami-nominatim-flatnode:
+  tami-redis-data:

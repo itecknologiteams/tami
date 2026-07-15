@@ -36,7 +36,20 @@ services:
       retries: 120
       start_period: 30m
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6390:6379"
+    volumes:
+      - tami-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
   tami-postgres-data:
   tami-nominatim-data:
   tami-nominatim-flatnode:
+  tami-redis-data:
