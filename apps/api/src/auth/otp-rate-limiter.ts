@@ -1,17 +1,13 @@
-import { HttpException, HttpStatus, Injectable } from "@nestjs/common";
-
-type Redis = {
-  incr(key: string): Promise<number>;
-  expire(key: string, seconds: number): Promise<number>;
-  ttl(key: string): Promise<number>;
-};
+import { HttpException, HttpStatus, Inject, Injectable } from "@nestjs/common";
+import type Redis from "ioredis";
+import { REDIS_CLIENT } from "../redis/redis-client.provider";
 
 const windowSeconds = 10 * 60;
 const maxRequestsPerWindow = 3;
 
 @Injectable()
 export class OtpRateLimiter {
-  constructor(private readonly redis: Redis) {}
+  constructor(@Inject(REDIS_CLIENT) private readonly redis: Redis) {}
 
   async assertNotRateLimited(phone: string): Promise<void> {
     const key = `otp-rate-limit:${phone}`;

@@ -11,11 +11,12 @@ import { PrismaAdminOverviewRepository } from "./admin/prisma-admin-overview.rep
 import { AuthController } from "./auth/auth.controller";
 import { AuthRepository } from "./auth/auth.repository";
 import { AuthService } from "./auth/auth.service";
-import { DevelopmentOtpStore } from "./auth/development-otp-store";
 import { DriverAuthController } from "./auth/driver-auth.controller";
 import { DriverAuthGuard } from "./auth/driver-auth.guard";
 import { DriverAuthRepository } from "./auth/driver-auth.repository";
 import { DriverAuthService } from "./auth/driver-auth.service";
+import { OtpRateLimiter } from "./auth/otp-rate-limiter";
+import { OtpService } from "./auth/otp.service";
 import { PrismaAuthRepository } from "./auth/prisma-auth.repository";
 import { PrismaDriverAuthRepository } from "./auth/prisma-driver-auth.repository";
 import { RiderAuthGuard } from "./auth/rider-auth.guard";
@@ -61,6 +62,7 @@ import {
   RiderRealtimeGateway,
 } from "./realtime/realtime.gateway";
 import { RealtimeEventBus } from "./realtime/realtime-event-bus";
+import { REDIS_CLIENT, createRedisClient } from "./redis/redis-client.provider";
 import { RiderProfileController } from "./riders/rider-profile.controller";
 import { RiderProfileService } from "./riders/rider-profile.service";
 import { OsrmRoutingProvider } from "./routing/osrm-routing.provider";
@@ -69,6 +71,9 @@ import { RoutingService } from "./routing/routing.service";
 import { RideTransitionService } from "./rides/ride-transition.service";
 import { RiderRideQueryController } from "./rides/rider-ride-query.controller";
 import { RiderRideQueryService } from "./rides/rider-ride-query.service";
+import { DevelopmentSmsProvider } from "./sms/development-sms.provider";
+import { SmsProvider } from "./sms/sms.provider";
+import { TwilioSmsProvider } from "./sms/twilio-sms.provider";
 
 @Module({
   controllers: [
@@ -91,7 +96,16 @@ import { RiderRideQueryService } from "./rides/rider-ride-query.service";
     RiderRideQueryService,
     PlatformConfigService,
     PrismaService,
-    DevelopmentOtpStore,
+    OtpService,
+    OtpRateLimiter,
+    {
+      provide: REDIS_CLIENT,
+      useFactory: createRedisClient,
+    },
+    {
+      provide: SmsProvider,
+      useFactory: createSmsProvider,
+    },
     AuthService,
     RiderAuthGuard,
     DriverAuthService,
@@ -202,4 +216,19 @@ function createPushNotificationProvider(): PushNotificationProvider {
     throw new Error("TAMI_FCM_SERVER_KEY is required in production");
   }
   return new DevelopmentPushNotificationProvider();
+}
+
+function createSmsProvider(): SmsProvider {
+  const accountSid = process.env.TAMI_TWILIO_ACCOUNT_SID?.trim();
+  const authToken = process.env.TAMI_TWILIO_AUTH_TOKEN?.trim();
+  const fromNumber = process.env.TAMI_TWILIO_FROM_NUMBER?.trim();
+  if (accountSid && authToken && fromNumber) {
+    return new TwilioSmsProvider({accountSid, authToken, fromNumber});
+  }
+  if (process.env.NODE_ENV === "production") {
+    throw new Error(
+      "TAMI_TWILIO_ACCOUNT_SID, TAMI_TWILIO_AUTH_TOKEN, and TAMI_TWILIO_FROM_NUMBER are required in production",
+    );
+  }
+  return new DevelopmentSmsProvider();
 }
