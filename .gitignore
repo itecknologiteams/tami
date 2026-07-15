@@ -13,3 +13,5 @@ coverage
 ios/Pods
 android/.gradle
 android/app/build
+
+.worktrees/
