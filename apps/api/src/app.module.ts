@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis";
+import type { Redis } from "ioredis";
 import { AdminOverviewController } from "./admin/admin-overview.controller";
 import { AdminOverviewRepository } from "./admin/admin-overview.repository";
 import { AdminOverviewService } from "./admin/admin-overview.service";
@@ -81,9 +82,10 @@ import { TwilioSmsProvider } from "./sms/twilio-sms.provider";
 @Module({
   imports: [
     ThrottlerModule.forRootAsync({
-      useFactory: () => ({
+      inject: [REDIS_CLIENT],
+      useFactory: (redis: Redis) => ({
         throttlers: [{ limit: 10, ttl: 600000 }],
-        storage: new ThrottlerStorageRedisService(createRedisClient()),
+        storage: new ThrottlerStorageRedisService(redis),
       }),
     }),
   ],
