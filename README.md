@@ -126,6 +126,8 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 The API refuses to boot in production without `TAMI_NOMINATIM_BASE_URL`, `TAMI_ROUTING_BASE_URL`, `TAMI_REDIS_URL`, `TAMI_TWILIO_ACCOUNT_SID`, `TAMI_TWILIO_AUTH_TOKEN`, and `TAMI_TWILIO_FROM_NUMBER`. Nominatim's first start imports the Pakistan OSM extract (roughly 30–60 minutes); the API container waits for the Nominatim healthcheck before starting. Set `TAMI_CORS_ORIGINS` to the comma-separated admin/web origins allowed to call the API; leave it empty only for development.
 
+Set `TAMI_TRUST_PROXY` to the number of reverse proxy hops in front of the API (e.g. `1` for a single load balancer/ingress — `docker-compose.prod.yml` defaults it to `1`). Without this, Express's `req.ip` resolves to the proxy's address instead of the real client's, which collapses the per-IP OTP/verify rate limit into one shared bucket across all users instead of limiting each client independently.
+
 Before promoting a build, run the full gate locally:
 
 ```bash

@@ -1,9 +1,14 @@
-import { Injectable, Logger } from "@nestjs/common";
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  Logger,
+} from "@nestjs/common";
 import { SmsProvider } from "./sms.provider";
 
-export class SmsDeliveryException extends Error {
+export class SmsDeliveryException extends HttpException {
   constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
+    super(message, HttpStatus.BAD_GATEWAY, { cause: options?.cause });
     this.name = "SmsDeliveryException";
   }
 }
@@ -85,9 +90,7 @@ export class TwilioSmsProvider extends SmsProvider {
       this.logger.error(
         `SMS delivery failed for ${phone} with status ${response.status}`,
       );
-      throw new SmsDeliveryException(
-        `SMS delivery failed with status ${response.status}`,
-      );
+      throw new SmsDeliveryException("SMS delivery is unavailable");
     }
   }
 }

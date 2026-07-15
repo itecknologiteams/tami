@@ -42,7 +42,7 @@ describe("TwilioSmsProvider", () => {
     ).rejects.toThrow(SmsDeliveryException);
   });
 
-  it("throws SmsDeliveryException on a non-success response", async () => {
+  it("throws SmsDeliveryException on a non-success response without leaking the upstream status", async () => {
     const fetcher = vi
       .fn()
       .mockResolvedValue(new Response("Bad Request", {status: 400}));
@@ -55,7 +55,27 @@ describe("TwilioSmsProvider", () => {
 
     await expect(
       provider.send("+923001234567", "code"),
-    ).rejects.toThrow("SMS delivery failed with status 400");
+    ).rejects.toThrow("SMS delivery is unavailable");
+  });
+
+  it("maps SmsDeliveryException to a 502 Bad Gateway HTTP status", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(new Response("Bad Request", {status: 400}));
+    const provider = new TwilioSmsProvider({
+      accountSid: "AC_test",
+      authToken: "secret",
+      fromNumber: "+15005550006",
+      fetcher,
+    });
+
+    expect.assertions(2);
+    try {
+      await provider.send("+923001234567", "code");
+    } catch (error) {
+      expect(error).toBeInstanceOf(SmsDeliveryException);
+      expect((error as SmsDeliveryException).getStatus()).toBe(502);
+    }
   });
 
   it("rejects blank credentials", () => {

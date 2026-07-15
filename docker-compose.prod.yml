@@ -6,6 +6,9 @@
 #   TAMI_REDIS_URL          Redis URL for OTP rate limiting (defaults to redis://redis:6379)
 #   TAMI_ADMIN_TOKEN        secret shared with the admin command center
 #   TAMI_CORS_ORIGINS       comma-separated allowed origins (optional)
+#   TAMI_TRUST_PROXY        number of reverse proxy hops in front of the API
+#                           (defaults to 1 below; adjust if your ingress/LB
+#                           topology has more or fewer hops)
 services:
   postgres:
     image: postgis/postgis:16-3.4
@@ -65,6 +68,7 @@ services:
       TAMI_REDIS_URL: redis://redis:6379
       TAMI_ADMIN_TOKEN: ${TAMI_ADMIN_TOKEN:?TAMI_ADMIN_TOKEN is required}
       TAMI_CORS_ORIGINS: ${TAMI_CORS_ORIGINS:-}
+      TAMI_TRUST_PROXY: ${TAMI_TRUST_PROXY:-1}
     ports:
       - "4000:4000"
     depends_on:

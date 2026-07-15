@@ -4,6 +4,7 @@ import { AuthService } from "./auth.service";
 import { createTestOtpService } from "./otp.test-fixture";
 import { InMemoryAuthRepository } from "./in-memory-auth.repository";
 import { DevelopmentOtpChallenge, OtpService } from "./otp.service";
+import { SmsDeliveryException } from "../sms/twilio-sms.provider";
 
 describe("AuthController", () => {
   it("exposes development OTP request and rider verification", async () => {
@@ -71,6 +72,29 @@ describe("AuthController", () => {
     await expect(
       controller.requestOtp({ phone: "+923001234567" }),
     ).rejects.toThrow("SMS delivery is unavailable");
+  });
+
+  it("surfaces sms delivery failure as a 502 Bad Gateway HTTP exception", async () => {
+    const failingSmsService = new AuthService(
+      new InMemoryAuthRepository([{ id: "city_karachi", active: true }]),
+      new OtpService(
+        {
+          send: async () => {
+            throw new SmsDeliveryException("SMS delivery is unavailable");
+          },
+        },
+        { assertNotRateLimited: async () => undefined } as never,
+      ),
+    );
+    const controller = new AuthController(failingSmsService);
+
+    expect.assertions(2);
+    try {
+      await controller.requestOtp({ phone: "+923001234567" });
+    } catch (error) {
+      expect(error).toBeInstanceOf(SmsDeliveryException);
+      expect((error as SmsDeliveryException).getStatus()).toBe(502);
+    }
   });
 
   it("applies a 10-request-per-10-minute throttle to the otp route", () => {
