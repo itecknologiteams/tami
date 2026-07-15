@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DevelopmentOtpStore } from "./development-otp-store";
+import { createTestOtpService } from "./otp.test-fixture";
 import { DriverAuthService } from "./driver-auth.service";
 import { InMemoryDriverAuthRepository } from "./in-memory-driver-auth.repository";
 
@@ -8,7 +8,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", name: "Karachi", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
 
     const challenge = await service.requestOtp("+923009876543");
     const result = await service.verifyDriver({
@@ -39,7 +39,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", active: false },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923009876543");
 
     await expect(
@@ -56,7 +56,7 @@ describe("DriverAuthService", () => {
       { id: "city_karachi", name: "Karachi", active: true },
       { id: "city_hyderabad", name: "Hyderabad", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
 
     const first = await service.requestOtp("+923009876543");
     const firstResult = await service.verifyDriver({
@@ -80,7 +80,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923009876543");
     const result = await service.verifyDriver({
       challengeId: challenge.challengeId,
@@ -101,7 +101,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
 
     await expect(service.authenticate("forged-token")).rejects.toThrow(
       "Driver session is invalid or expired",
@@ -112,7 +112,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923009876543");
     const result = await service.verifyDriver({
       challengeId: challenge.challengeId,
@@ -131,7 +131,7 @@ describe("DriverAuthService", () => {
     const repository = new InMemoryDriverAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new DriverAuthService(repository, new DevelopmentOtpStore());
+    const service = new DriverAuthService(repository, createTestOtpService());
 
     await expect(
       service.registerDeviceToken("driver_1", ""),

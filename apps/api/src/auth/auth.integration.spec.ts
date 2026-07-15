@@ -9,7 +9,7 @@ import { PricingService } from "../pricing/pricing.service";
 import { RealtimeEventBus } from "../realtime/realtime-event-bus";
 import { createTestRoutingService } from "../routing/routing.test-fixture";
 import { AuthService } from "./auth.service";
-import { DevelopmentOtpStore } from "./development-otp-store";
+import { createTestOtpService } from "./otp.test-fixture";
 import { PrismaAuthRepository } from "./prisma-auth.repository";
 
 function createFakeEventBus(): RealtimeEventBus {
@@ -63,7 +63,7 @@ describeDatabase("rider authentication integration", () => {
   it("persists a hashed session for a rider-owned booking", async () => {
     const authService = new AuthService(
       new PrismaAuthRepository(prisma as never),
-      new DevelopmentOtpStore(),
+      createTestOtpService(),
     );
     const challenge = await authService.requestOtp(phone);
     const session = await authService.verifyRider({

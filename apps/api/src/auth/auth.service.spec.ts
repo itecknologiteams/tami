@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AuthService } from "./auth.service";
-import { DevelopmentOtpStore } from "./development-otp-store";
+import { createTestOtpService } from "./otp.test-fixture";
 import { InMemoryAuthRepository } from "./in-memory-auth.repository";
 
 describe("AuthService", () => {
@@ -8,7 +8,7 @@ describe("AuthService", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", name: "Karachi", active: true },
     ]);
-    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const service = new AuthService(repository, createTestOtpService());
 
     const challenge = await service.requestOtp("+923001234567");
     const result = await service.verifyRider({
@@ -40,7 +40,7 @@ describe("AuthService", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", active: false },
     ]);
-    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const service = new AuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923001234567");
 
     await expect(
@@ -56,7 +56,7 @@ describe("AuthService", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const service = new AuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923001234567");
     const session = await service.verifyRider({
       challengeId: challenge.challengeId,
@@ -75,7 +75,7 @@ describe("AuthService", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const service = new AuthService(repository, createTestOtpService());
     const challenge = await service.requestOtp("+923001234567");
     const session = await service.verifyRider({
       challengeId: challenge.challengeId,
@@ -94,7 +94,7 @@ describe("AuthService", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const service = new AuthService(repository, new DevelopmentOtpStore());
+    const service = new AuthService(repository, createTestOtpService());
 
     await expect(
       service.registerDeviceToken("rider_1", "   "),

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AuthService } from "./auth.service";
-import { DevelopmentOtpStore } from "./development-otp-store";
+import { createTestOtpService } from "./otp.test-fixture";
 import { InMemoryAuthRepository } from "./in-memory-auth.repository";
 import { RiderAuthGuard } from "./rider-auth.guard";
 
@@ -9,7 +9,7 @@ describe("RiderAuthGuard", () => {
     const repository = new InMemoryAuthRepository([
       { id: "city_karachi", active: true },
     ]);
-    const authService = new AuthService(repository, new DevelopmentOtpStore());
+    const authService = new AuthService(repository, createTestOtpService());
     const challenge = await authService.requestOtp("+923001234567");
     const session = await authService.verifyRider({
       challengeId: challenge.challengeId,

@@ -1,7 +1,7 @@
 import { UnauthorizedException } from "@nestjs/common";
 import { describe, expect, it } from "vitest";
 import { AuthService } from "../auth/auth.service";
-import { DevelopmentOtpStore } from "../auth/development-otp-store";
+import { createTestOtpService } from "../auth/otp.test-fixture";
 import { DriverAuthService } from "../auth/driver-auth.service";
 import { InMemoryAuthRepository } from "../auth/in-memory-auth.repository";
 import { InMemoryDriverAuthRepository } from "../auth/in-memory-driver-auth.repository";
@@ -16,7 +16,7 @@ async function createRiderSession() {
   const repository = new InMemoryAuthRepository([
     {id: "city_karachi", name: "Karachi", active: true},
   ]);
-  const authService = new AuthService(repository, new DevelopmentOtpStore());
+  const authService = new AuthService(repository, createTestOtpService());
   const challenge = await authService.requestOtp("+923001234567");
   const result = await authService.verifyRider({
     challengeId: challenge.challengeId,
@@ -32,7 +32,7 @@ async function createDriverSession() {
   ]);
   const driverAuthService = new DriverAuthService(
     repository,
-    new DevelopmentOtpStore(),
+    createTestOtpService(),
   );
   const challenge = await driverAuthService.requestOtp("+923009876543");
   const result = await driverAuthService.verifyDriver({
@@ -75,7 +75,7 @@ describe("RealtimeAuthHandshake", () => {
       authService,
       new DriverAuthService(
         new InMemoryDriverAuthRepository([]),
-        new DevelopmentOtpStore(),
+        createTestOtpService(),
       ),
     );
 
@@ -92,7 +92,7 @@ describe("RealtimeAuthHandshake", () => {
       authService,
       new DriverAuthService(
         new InMemoryDriverAuthRepository([]),
-        new DevelopmentOtpStore(),
+        createTestOtpService(),
       ),
     );
 
@@ -107,7 +107,7 @@ describe("RealtimeAuthHandshake", () => {
       authService,
       new DriverAuthService(
         new InMemoryDriverAuthRepository([]),
-        new DevelopmentOtpStore(),
+        createTestOtpService(),
       ),
     );
 
@@ -120,7 +120,7 @@ describe("RealtimeAuthHandshake", () => {
     const {driverAuthService, accessToken, driverId} =
       await createDriverSession();
     const handshake = new RealtimeAuthHandshake(
-      new AuthService(new InMemoryAuthRepository([]), new DevelopmentOtpStore()),
+      new AuthService(new InMemoryAuthRepository([]), createTestOtpService()),
       driverAuthService,
     );
 
@@ -134,7 +134,7 @@ describe("RealtimeAuthHandshake", () => {
   it("rejects a driver connection with no token", async () => {
     const {driverAuthService} = await createDriverSession();
     const handshake = new RealtimeAuthHandshake(
-      new AuthService(new InMemoryAuthRepository([]), new DevelopmentOtpStore()),
+      new AuthService(new InMemoryAuthRepository([]), createTestOtpService()),
       driverAuthService,
     );
 
@@ -146,7 +146,7 @@ describe("RealtimeAuthHandshake", () => {
   it("rejects a driver connection with an invalid token", async () => {
     const {driverAuthService} = await createDriverSession();
     const handshake = new RealtimeAuthHandshake(
-      new AuthService(new InMemoryAuthRepository([]), new DevelopmentOtpStore()),
+      new AuthService(new InMemoryAuthRepository([]), createTestOtpService()),
       driverAuthService,
     );
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { AuthService } from "../auth/auth.service";
-import { DevelopmentOtpStore } from "../auth/development-otp-store";
+import { createTestOtpService } from "../auth/otp.test-fixture";
 import { InMemoryAuthRepository } from "../auth/in-memory-auth.repository";
 import { RiderProfileService } from "./rider-profile.service";
 
@@ -10,7 +10,7 @@ describe("RiderProfileService", () => {
       { id: "city_karachi", name: "Karachi", active: true },
       { id: "city_hyderabad", name: "Hyderabad", active: true },
     ]);
-    const authService = new AuthService(repository, new DevelopmentOtpStore());
+    const authService = new AuthService(repository, createTestOtpService());
     const challenge = await authService.requestOtp("+923001234567");
     const session = await authService.verifyRider({
       challengeId: challenge.challengeId,

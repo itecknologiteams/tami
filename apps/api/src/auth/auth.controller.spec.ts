@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
-import { DevelopmentOtpStore } from "./development-otp-store";
+import { createTestOtpService } from "./otp.test-fixture";
 import { InMemoryAuthRepository } from "./in-memory-auth.repository";
 
 describe("AuthController", () => {
@@ -9,7 +9,7 @@ describe("AuthController", () => {
     const controller = new AuthController(
       new AuthService(
         new InMemoryAuthRepository([{ id: "city_karachi", active: true }]),
-        new DevelopmentOtpStore(),
+        createTestOtpService(),
       ),
     );
 

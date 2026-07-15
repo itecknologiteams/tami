@@ -13,10 +13,7 @@ import {
   VerifyRiderRequest,
   VerifyRiderResult,
 } from "./auth.types";
-import {
-  DevelopmentOtpChallenge,
-  DevelopmentOtpStore,
-} from "./development-otp-store";
+import { DevelopmentOtpChallenge, OtpService } from "./otp.service";
 
 const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 
@@ -28,7 +25,7 @@ export function hashSessionToken(token: string): string {
 export class AuthService {
   constructor(
     private readonly repository: AuthRepository,
-    private readonly otpStore: DevelopmentOtpStore,
+    private readonly otpStore: OtpService,
   ) {}
 
   async requestOtp(phone: string): Promise<DevelopmentOtpChallenge> {

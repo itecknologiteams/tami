@@ -4,6 +4,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { randomInt, randomUUID } from "node:crypto";
+import { SmsProvider } from "../sms/sms.provider";
+import { OtpRateLimiter } from "./otp-rate-limiter";
 
 type OtpChallenge = {
   phone: string;
@@ -18,19 +20,32 @@ export type DevelopmentOtpChallenge = {
 };
 
 @Injectable()
-export class DevelopmentOtpStore {
+export class OtpService {
   private readonly challenges = new Map<string, OtpChallenge>();
 
-  issue(phone: string): DevelopmentOtpChallenge {
+  constructor(
+    private readonly smsProvider: SmsProvider,
+    private readonly rateLimiter: OtpRateLimiter,
+  ) {}
+
+  async issue(phone: string): Promise<DevelopmentOtpChallenge> {
+    this.assertPhone(phone);
+    await this.rateLimiter.assertNotRateLimited(phone);
+
     const challengeId = `challenge_${randomUUID()}`;
     const code = randomInt(100000, 1000000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     this.challenges.set(challengeId, { phone, code, expiresAt });
 
+    await this.smsProvider.send(
+      phone,
+      `Your Tami verification code is ${code}. It expires in 5 minutes.`,
+    );
+
     return {
       challengeId,
-      developmentCode: code,
+      developmentCode: process.env.NODE_ENV === "production" ? "" : code,
       expiresAt: expiresAt.toISOString(),
     };
   }

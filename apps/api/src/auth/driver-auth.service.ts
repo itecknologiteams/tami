@@ -6,10 +6,7 @@ import {
 } from "@nestjs/common";
 import { randomBytes } from "node:crypto";
 import { hashSessionToken } from "./auth.service";
-import {
-  DevelopmentOtpChallenge,
-  DevelopmentOtpStore,
-} from "./development-otp-store";
+import { DevelopmentOtpChallenge, OtpService } from "./otp.service";
 import { DriverAuthRepository } from "./driver-auth.repository";
 import {
   AuthenticatedDriver,
@@ -23,7 +20,7 @@ const sessionLifetimeMs = 30 * 24 * 60 * 60 * 1000;
 export class DriverAuthService {
   constructor(
     private readonly repository: DriverAuthRepository,
-    private readonly otpStore: DevelopmentOtpStore,
+    private readonly otpStore: OtpService,
   ) {}
 
   async requestOtp(phone: string): Promise<DevelopmentOtpChallenge> {
