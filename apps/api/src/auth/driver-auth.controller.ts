@@ -1,4 +1,5 @@
 import { Body, Controller, Post, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { DriverAuthService } from "./driver-auth.service";
 import { AuthenticatedDriver, VerifyDriverRequest } from "./driver-auth.types";
 import { CurrentDriver, DriverAuthGuard } from "./driver-auth.guard";
@@ -8,6 +9,7 @@ export class DriverAuthController {
   constructor(private readonly authService: DriverAuthService) {}
 
   @Post("otp")
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   async requestOtp(@Body() request: { phone: string }) {
     const challenge = await this.authService.requestOtp(request.phone);
     if (process.env.NODE_ENV === "production") {
@@ -17,6 +19,7 @@ export class DriverAuthController {
   }
 
   @Post("verify")
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   verifyDriver(@Body() request: VerifyDriverRequest) {
     return this.authService.verifyDriver(request);
   }

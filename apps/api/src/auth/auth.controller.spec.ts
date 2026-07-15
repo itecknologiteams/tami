@@ -72,4 +72,18 @@ describe("AuthController", () => {
       controller.requestOtp({ phone: "+923001234567" }),
     ).rejects.toThrow("SMS delivery is unavailable");
   });
+
+  it("applies a 10-request-per-10-minute throttle to the otp route", () => {
+    const limit = Reflect.getMetadata(
+      "THROTTLER:LIMITdefault",
+      AuthController.prototype.requestOtp,
+    );
+    const ttl = Reflect.getMetadata(
+      "THROTTLER:TTLdefault",
+      AuthController.prototype.requestOtp,
+    );
+
+    expect(limit).toBe(10);
+    expect(ttl).toBe(600000);
+  });
 });

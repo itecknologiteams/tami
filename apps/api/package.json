@@ -16,10 +16,12 @@
     "typecheck": "pnpm --filter @tami/shared build && pnpm run prisma:generate && tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@nest-lab/throttler-storage-redis": "1.2.0",
     "@nestjs/common": "11.1.6",
     "@nestjs/core": "11.1.6",
     "@nestjs/platform-express": "11.1.6",
     "@nestjs/platform-socket.io": "11.1.28",
+    "@nestjs/throttler": "6.5.0",
     "@nestjs/websockets": "11.1.28",
     "@prisma/client": "6.19.2",
     "@tami/shared": "workspace:*",

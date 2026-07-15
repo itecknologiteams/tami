@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { AuthService } from "./auth.service";
 import { AuthenticatedRider, VerifyRiderRequest } from "./auth.types";
 import { CurrentRider, RiderAuthGuard } from "./rider-auth.guard";
@@ -13,6 +14,7 @@ export class AuthController {
   }
 
   @Post("otp")
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   async requestOtp(@Body() request: { phone: string }) {
     const challenge = await this.authService.requestOtp(request.phone);
     if (process.env.NODE_ENV === "production") {
@@ -22,6 +24,7 @@ export class AuthController {
   }
 
   @Post("verify")
+  @Throttle({ default: { limit: 10, ttl: 600000 } })
   verifyRider(@Body() request: VerifyRiderRequest) {
     return this.authService.verifyRider(request);
   }
