@@ -59,9 +59,17 @@ Run the database integration test against the local service with:
 DATABASE_URL="postgresql://tami:tami@127.0.0.1:5434/tami" RUN_DATABASE_TESTS=true pnpm --filter @tami/api test:integration
 ```
 
-## Rider Development Login
+## Rider Login
 
-The current rider login flow is development-only. It returns a six-digit code from `POST /auth/rider/otp`, then exchanges the code and a selected city ID at `POST /auth/rider/verify` for a Tami bearer token. Do not expose this code-returning flow in a public deployment; replace it with a real OTP provider before launch.
+`POST /auth/rider/otp` sends a six-digit code by SMS (via the configured
+`SmsProvider`) and returns a `challengeId`; `POST /auth/rider/verify`
+exchanges the code and a selected city ID for a Tami bearer token. Outside
+production, the response also includes `developmentCode` so the code can be
+read directly without a live SMS account — this field is omitted in
+production. Configure `TAMI_TWILIO_ACCOUNT_SID`, `TAMI_TWILIO_AUTH_TOKEN`,
+and `TAMI_TWILIO_FROM_NUMBER` for real SMS delivery; the API refuses to
+boot in production without them. OTP requests are rate-limited to 3 per
+phone number and 10 per IP address per 10 minutes.
 
 The rider app reads its API URL from `TAMI_API_BASE_URL`. The Android emulator default is `http://10.0.2.2:4000`; provide an appropriate value for iOS simulators and physical devices:
 
@@ -116,7 +124,7 @@ cp .env.production.example .env   # then fill in real secrets
 docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-The API refuses to boot in production without `TAMI_NOMINATIM_BASE_URL` and `TAMI_ROUTING_BASE_URL`. Nominatim's first start imports the Pakistan OSM extract (roughly 30–60 minutes); the API container waits for the Nominatim healthcheck before starting. Set `TAMI_CORS_ORIGINS` to the comma-separated admin/web origins allowed to call the API; leave it empty only for development.
+The API refuses to boot in production without `TAMI_NOMINATIM_BASE_URL`, `TAMI_ROUTING_BASE_URL`, `TAMI_REDIS_URL`, `TAMI_TWILIO_ACCOUNT_SID`, `TAMI_TWILIO_AUTH_TOKEN`, and `TAMI_TWILIO_FROM_NUMBER`. Nominatim's first start imports the Pakistan OSM extract (roughly 30–60 minutes); the API container waits for the Nominatim healthcheck before starting. Set `TAMI_CORS_ORIGINS` to the comma-separated admin/web origins allowed to call the API; leave it empty only for development.
 
 Before promoting a build, run the full gate locally:
 
@@ -125,11 +133,11 @@ pnpm typecheck && pnpm test && pnpm build
 RUN_DATABASE_TESTS=true pnpm --filter @tami/api test:integration
 ```
 
-The development rider OTP flow (`POST /auth/rider/otp` returning the code) must be replaced with a real OTP provider before any public launch — see the note in the rider login section above. The driver flow (`POST /auth/driver/otp` / `verify`) shares the same development-only OTP mechanism and caveat.
+Rider and driver OTP delivery share the same `SmsProvider` and rate limiter — see the Rider Login section above for the required Twilio configuration and rate limits. The driver flow (`POST /auth/driver/otp` / `verify`) uses the same mechanism.
 
 ## Driver Ride Loop
 
-Drivers sign in with the same phone/OTP/city flow (`/auth/driver/*`) and manage duty through `POST /driver/availability`. Dispatch is pull-based: `GET /driver/rides/current` returns the driver's active ride, or atomically claims the oldest waiting ride in their city (`requested → matching → offered_to_driver`). Offers are accepted (`POST /driver/rides/:id/accept`), declined back into the matching pool, or advanced through pickup and trip states to `complete`, which stamps the final fare and marks the cash payment record paid. Every transition is validated by the shared ride state machine and audited in `RideStateTransition`.
+Drivers sign in with the same phone/OTP/city flow (`/auth/driver/*`) (see Rider Login above for the SMS/rate-limiting configuration, which the driver flow shares) and manage duty through `POST /driver/availability`. Dispatch is pull-based: `GET /driver/rides/current` returns the driver's active ride, or atomically claims the oldest waiting ride in their city (`requested → matching → offered_to_driver`). Offers are accepted (`POST /driver/rides/:id/accept`), declined back into the matching pool, or advanced through pickup and trip states to `complete`, which stamps the final fare and marks the cash payment record paid. Every transition is validated by the shared ride state machine and audited in `RideStateTransition`.
 
 While on duty the app streams `POST /driver/location` pings, renders the ride's road route from `GET /driver/rides/:id/route` on the MapLibre surface, and chats with the rider through `/driver/rides/:id/chat`. The Earnings tab reads `GET /driver/earnings` (today and last-7-days totals) and `GET /driver/rides/history`; the shell has Duty, Earnings, and Account tabs in the same liquid-glass design language as the rider app. Run the driver app with:
 
