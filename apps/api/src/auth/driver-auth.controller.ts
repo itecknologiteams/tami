@@ -8,8 +8,12 @@ export class DriverAuthController {
   constructor(private readonly authService: DriverAuthService) {}
 
   @Post("otp")
-  requestOtp(@Body() request: { phone: string }) {
-    return this.authService.requestOtp(request.phone);
+  async requestOtp(@Body() request: { phone: string }) {
+    const challenge = await this.authService.requestOtp(request.phone);
+    if (process.env.NODE_ENV === "production") {
+      return { challengeId: challenge.challengeId, expiresAt: challenge.expiresAt };
+    }
+    return challenge;
   }
 
   @Post("verify")
